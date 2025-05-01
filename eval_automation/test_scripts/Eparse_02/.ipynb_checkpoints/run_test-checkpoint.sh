@@ -1,21 +1,18 @@
 #!/bin/bash
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-EVAL_AUTOMATION_DIR="$(dirname "$SCRIPT_DIR")"
-WORKSPACE_DIR="$(dirname "$EVAL_AUTOMATION_DIR")"
 
 # === 基本变量配置 ===
-REPO_NAME="PyPDF2_01"
-DEFAULT_EVALING_DIR="${WORKSPACE_DIR}"
-GIT_ROOT_DIR="${WORKSPACE_DIR}/.."
+REPO_NAME="eparse_01"  # 替换为你的仓库名称
+BASE_DIR="/root/autodl-tmp/GitTaskBench/eval_automation"
+GIT_ROOT="/root/autodl-tmp"
 
-SCRIPT_DIR="${DEFAULT_EVALING_DIR}/test_scripts/${REPO_NAME}"
-GT_DIR="${DEFAULT_EVALING_DIR}/groundtruth/${REPO_NAME}"
-OUT_DIR="${DEFAULT_EVALING_DIR}/output/${REPO_NAME}"
-RESULT_DIR="${DEFAULT_EVALING_DIR}/test_results/${REPO_NAME}"
+SCRIPT_DIR="${BASE_DIR}/test_scripts/${REPO_NAME}"
+GT_DIR="${BASE_DIR}/groundtruth/${REPO_NAME}"
+OUT_DIR="${BASE_DIR}/output/${REPO_NAME}"
+RESULT_DIR="${BASE_DIR}/test_results/${REPO_NAME}"
 
 TEST_SCRIPT="${SCRIPT_DIR}/test_script.py"
 PRED_FILE="${OUT_DIR}/output.txt"
-TRUTH_FILE="${GT_DIR}/gt.txt"
+GT_FILE="${GT_DIR}/gt.txt"
 RESULT_JSON="${RESULT_DIR}/results.jsonl"
 
 # === 自动创建必要目录 ===
@@ -24,22 +21,21 @@ mkdir -p "${SCRIPT_DIR}" "${GT_DIR}" "${OUT_DIR}" "${RESULT_DIR}"
 # === 检查必要文件 ===
 check_file_exists() {
     if [ ! -f "$1" ]; then
-        echo "[❌ 错误] 文件不存在或无法访问: $1"
+        echo "[❌ 错误] 文件不存在: $1"
         exit 1
     fi
 }
 
 check_file_exists "${TEST_SCRIPT}"
 check_file_exists "${PRED_FILE}"
-check_file_exists "${TRUTH_FILE}"
+check_file_exists "${GT_FILE}"
 
 # === 执行测试脚本 ===
 echo "=== [$(date)] 测试开始: ${REPO_NAME} ==="
 
-# 运行测试脚本并传递参数
 python "${TEST_SCRIPT}" \
-    --pred_file "${PRED_FILE}" \
-    --truth_file "${TRUTH_FILE}" \
+    --pred "${PRED_FILE}" \
+    --gt "${GT_FILE}" \
     --result "${RESULT_JSON}"
 
 # === 结果状态判断 ===
