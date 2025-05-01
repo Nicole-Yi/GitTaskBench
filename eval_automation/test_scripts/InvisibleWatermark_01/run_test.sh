@@ -23,8 +23,10 @@ check_file_exists() {
 }
 
 # --- 自动创建缺失目录 ---
-mkdir -p "${OUTPUT_DIR}"
-mkdir -p "${RESULT_DIR}"
+mkdir -p "${OUTPUT_DIR}/${REPO_NAME}"
+mkdir -p "${RESULT_DIR}/${REPO_NAME}"
+mkdir -p "${SCRIPT_DIR}/${REPO_NAME}"
+mkdir -p "${GT_DIR}/${REPO_NAME}"
 
 # --- 检查关键文件是否存在 ---
 check_file_exists() {
