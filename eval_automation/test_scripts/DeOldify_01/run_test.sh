@@ -23,8 +23,10 @@ check_file_exists() {
 }
 
 # --- 自动创建缺失目录 ---
-mkdir -p "${OUTPUT_DIR}"
-mkdir -p "${RESULT_DIR}"
+mkdir -p "${OUTPUT_DIR}/${REPO_NAME}"
+mkdir -p "${RESULT_DIR}/${REPO_NAME}"
+mkdir -p "${SCRIPT_DIR}/${REPO_NAME}"
+mkdir -p "${GT_DIR}/${REPO_NAME}"
 
 # --- 检查关键文件是否存在 ---
 check_file_exists() {
@@ -40,7 +42,7 @@ RESULT_JSON="${RESULT_DIR}/${REPO_NAME}/results.jsonl"
 ########################################################################################################
 # 需要修改，是否涉及01 02，格式 
 TEST_SCRIPT="${SCRIPT_DIR}/${REPO_NAME}/test_script.py"
-INPUT_IMAGE="${GT_DIR}/${REPO_NAME}/gt.webp"
+INPUT_IMAGE="${GT_DIR}/${REPO_NAME}/gt.jpg"
 
 
 check_file_exists "${TEST_SCRIPT}"

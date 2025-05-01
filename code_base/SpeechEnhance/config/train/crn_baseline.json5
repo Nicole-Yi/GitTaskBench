@@ -1,0 +1,70 @@
+{
+    "seed": 0,
+    "description": "null",
+    "root_dir": "~/Experiments/CRN",
+    "cudnn_deterministic": false,
+    "trainer": {
+        "module": "trainer.trainer_fixed_length_input",
+        "main": "Trainer",
+        "epochs": 1200,
+        "save_checkpoint_interval": 5,
+        "validation": {
+            "interval": 5,
+            "find_max": true,
+            "custom": {
+                "visualization_limit": 20,
+                "n_fft": 320,
+                "win_length": 320,
+                "hop_length": 160
+            }
+        }
+    },
+    "model": {
+        "module": "model.crn_in_paper_batch_norm",
+        "main": "Model",
+        "args": {
+        }
+    },
+    "loss_function": {
+        "module": "model.loss",
+        "main": "mse_loss_for_variable_length_data",
+        "args": {}
+    },
+    "optimizer": {
+        "lr": 0.0006,
+        "beta1": 0.9,
+        "beta2": 0.999
+    },
+    "train_dataset": {
+        "module": "dataset.dataset_variable_length_input",
+        "main": "Dataset",
+        "args": {
+            "dataset_list": "~/Datasets/SEGAN_Dataset/train_dataset.txt",
+            "limit": null,
+            "offset": 0,
+            "sr": 16000,
+            "n_fft": 320,
+            "hop_length": 160,
+            "train": true
+        }
+    },
+    "validation_dataset": {
+        "module": "dataset.dataset_variable_length_input",
+        "main": "Dataset",
+        "args": {
+            "dataset_list": "~/Datasets/SEGAN_Dataset/test_dataset.txt",
+            "limit": null,
+            "offset": 0,
+            "sr": 16000,
+            "n_fft": 320,
+            "hop_length": 160,
+            "train": false
+        },
+    },
+    "train_dataloader": {
+        "batch_size": 32,
+        "num_workers": 40,
+        "shuffle": true,
+        "pin_memory": true
+    }
+}
