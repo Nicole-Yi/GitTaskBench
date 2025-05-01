@@ -3,14 +3,17 @@
 
 # Get the directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+EVAL_AUTOMATION_DIR="$(dirname "$SCRIPT_DIR")"
+WORKSPACE_DIR="$(dirname "$EVAL_AUTOMATION_DIR")"
 
 # Default paths relative to the script's location (assuming standard project structure)
 # Adjust these defaults if your structure differs
 ### 更改
-DEFAULT_QUERIES_DIR="/mnt/nfs_200T/home/nzy/GitTaskBench/queries"
-DEFAULT_WORKING_DIR="/mnt/nfs_200T/home/nzy/GitTaskBench/eval_automation/output"
+GIT_ROOT_DIR="$WORKSPACE_DIR"  
+DEFAULT_QUERIES_DIR="$EVAL_AUTOMATION_DIR/queries"  
+DEFAULT_WORKING_DIR="$EVAL_AUTOMATION_DIR/eval_automation/output"
 # 然后可以把选中的任务prompt、继续调整的prompt移到final_prompt文件夹中来
-GIT_ROOT_DIR="/mnt/nfs_200T/home/nzy/"
+
 
 # Initialize variables with default values
 QUERIES_DIR="${DEFAULT_QUERIES_DIR}"

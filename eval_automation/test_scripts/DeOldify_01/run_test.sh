@@ -1,12 +1,16 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+EVAL_AUTOMATION_DIR="$(dirname "$SCRIPT_DIR")"
+WORKSPACE_DIR="$(dirname "$EVAL_AUTOMATION_DIR")"
+
 # --- 定义全局路径变量 ---
 ########################################################################################################
 # 需要修改
 # --- 定义仓库名称（将此变量替换为实际仓库名）---
 REPO_NAME="DeOldify_01"  # ⚠️ 修改此行！！！
-DEFAULT_EVALING_DIR="/mnt/nfs_200T/home/nzy/GitTaskBench/eval_automation"
-GIT_ROOT_DIR="/mnt/nfs_200T/home/nzy/"
+DEFAULT_EVALING_DIR="${WORKSPACE_DIR}"
+GIT_ROOT_DIR="${WORKSPACE_DIR}/.."
 
 
 GT_DIR="${DEFAULT_EVALING_DIR}/groundtruth"
