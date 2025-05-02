@@ -12,8 +12,8 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # 获取项目根目录（脚本目录的上两级）
 ROOT_DIR="$( cd "$SCRIPT_DIR/../.." && pwd )"
 # 输入/输出目录
-INPUT_DIR="${ROOT_DIR}/output/NeuroKit_02"
-RESULTS_DIR="${ROOT_DIR}/test_results/NeuroKit_02"
+INPUT_DIR="${ROOT_DIR}/output/NeuroKit_01"
+RESULTS_DIR="${ROOT_DIR}/test_results/NeuroKit_01"
 
 # 确保结果目录存在
 mkdir -p "$RESULTS_DIR"
@@ -46,7 +46,7 @@ echo -e "${BLUE}输入目录: $INPUT_DIR${NC}"
 echo -e "${BLUE}结果目录: $RESULTS_DIR${NC}"
 
 # 结果汇总
-echo -e "\n${YELLOW}================ EDA 评估开始 =================${NC}"
+echo -e "\n${YELLOW}================ ECG HRV 评估开始 =================${NC}"
 
 # 如果需要运行测试，检查测试脚本是否存在
 if [ $RUN_TESTS -eq 1 ]; then
@@ -80,14 +80,14 @@ else
 fi
 
 # 检查评估脚本是否存在
-if [ ! -f "${SCRIPT_DIR}/evaluate.py" ]; then
-    echo -e "${RED}错误: 评估脚本 'evaluate.py' 不存在${NC}"
+if [ ! -f "${SCRIPT_DIR}/test_script.py" ]; then
+    echo -e "${RED}错误: 评估脚本 'test_script.py' 不存在${NC}"
     exit 1
 fi
 
 # 运行评估脚本
 echo -e "${BLUE}运行评估脚本...${NC}"
-cd "$SCRIPT_DIR" && python3 evaluate.py --input "$INPUT_DIR" --result "$RESULT_FILE"
+cd "$SCRIPT_DIR" && python3 test_script.py --input "$INPUT_DIR" --result "$RESULT_FILE"
 
 # 检查JSONL结果文件是否存在
 if [ ! -f "$RESULT_FILE" ]; then
@@ -101,17 +101,11 @@ SUCCESS_STATUS=$(grep -o '"Result": true' "$RESULT_FILE" || echo "false")
 if echo "$SUCCESS_STATUS" | grep -q "true"; then
     echo -e "${GREEN}评估成功!${NC}"
     
-    # 提取匹配分数（如果存在）
-    MATCH_SCORE=$(grep -o '"score": [0-9.]*' "$RESULT_FILE" | awk '{print $2}' || echo "不适用")
-    if [ "$MATCH_SCORE" != "不适用" ]; then
-        echo -e "${GREEN}与groundtruth匹配度: $MATCH_SCORE%${NC}"
-    fi
-    
     # 提取结论（如果存在）
     CONCLUSION=$(grep -o '"comments": "[^"]*"' "$RESULT_FILE" | cut -d'"' -f4 || echo "无结论")
     echo -e "${BLUE}结论: $CONCLUSION${NC}"
     
-    RESULT="${GREEN}成功 - EDA分析结果符合预期${NC}"
+    RESULT="${GREEN}成功 - HRV分析结果符合预期${NC}"
 else
     echo -e "${RED}评估失败!${NC}"
     
@@ -126,7 +120,7 @@ else
 fi
 
 echo -e "\n${YELLOW}================ 评估结果 =================${NC}"
-echo -e "${BLUE}皮肤电活动分析: ${RESULT}${NC}"
+echo -e "${BLUE}ECG心率变异性分析: ${RESULT}${NC}"
 
 echo -e "\n${YELLOW}================ 评估结束 =================${NC}"
 
