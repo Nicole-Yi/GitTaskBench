@@ -144,6 +144,9 @@ def prompt_format_query(
         prompt_addition=prompt_addition # Ensure prompt_addition is included
     )
 
+
+    # 将prompt保存到promt_save_path
+
     # Ensure the directory for the prompt file exists
     os.makedirs(os.path.dirname(promt_save_path), exist_ok=True)
     with open(promt_save_path, "w", encoding='utf-8') as f: # Specify encoding
