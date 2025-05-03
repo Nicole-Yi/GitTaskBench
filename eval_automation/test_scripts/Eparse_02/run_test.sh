@@ -13,14 +13,10 @@ REPO_NAME="Eparse_02"  # ⚠️ 修改此行！！！
 DEFAULT_EVALING_DIR="${WORKSPACE_DIR}"
 GIT_ROOT_DIR="${WORKSPACE_DIR}/.."
 
-# === 基本变量配置 ===
-BASE_DIR="/root/autodl-tmp/GitTaskBench/eval_automation"
-GIT_ROOT="/root/autodl-tmp"
-
-SCRIPT_DIR="${BASE_DIR}/test_scripts/${REPO_NAME}"
-GT_DIR="${BASE_DIR}/groundtruth/${REPO_NAME}"
-OUT_DIR="${BASE_DIR}/output/${REPO_NAME}"
-RESULT_DIR="${BASE_DIR}/test_results/${REPO_NAME}"
+SCRIPT_DIR="${DEFAULT_EVALING_DIR}/test_scripts/${REPO_NAME}"
+GT_DIR="${DEFAULT_EVALING_DIR}/groundtruth/${REPO_NAME}"
+OUT_DIR="${DEFAULT_EVALING_DIR}/output/${REPO_NAME}"
+RESULT_DIR="${DEFAULT_EVALING_DIR}/test_results/${REPO_NAME}"
 
 TEST_SCRIPT="${SCRIPT_DIR}/test_script.py"
 PRED_FILE="${OUT_DIR}/output.txt"
