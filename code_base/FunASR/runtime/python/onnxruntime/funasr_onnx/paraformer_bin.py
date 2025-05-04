@@ -50,13 +50,11 @@ class Paraformer:
             try:
                 from modelscope.hub.snapshot_download import snapshot_download
             except:
-                raise "You are exporting model from modelscope, please install modelscope and try it again. To install modelscope, you could:\n" "\npip3 install -U modelscope\n" "For the users in China, you could install with the command:\n" "\npip3 install -U modelscope -i https://mirror.sjtu.edu.cn/pypi/web/simple"
+                raise Exception("You are exporting model from modelscope, please install modelscope and try it again. To install modelscope, you could:\n" "\npip3 install -U modelscope\n" "For the users in China, you could install with the command:\n" "\npip3 install -U modelscope -i https://mirror.sjtu.edu.cn/pypi/web/simple")
             try:
                 model_dir = snapshot_download(model_dir, cache_dir=cache_dir)
             except:
-                raise "model_dir must be model_name in modelscope or local path downloaded from modelscope, but is {}".format(
-                    model_dir
-                )
+                raise Exception("model_dir must be model_name in modelscope or local path downloaded from modelscope, but is {}".format(model_dir))
 
         model_file = os.path.join(model_dir, "model.onnx")
         if quantize:
@@ -66,7 +64,7 @@ class Paraformer:
             try:
                 from funasr import AutoModel
             except:
-                raise "You are exporting onnx, please install funasr and try it again. To install funasr, you could:\n" "\npip3 install -U funasr\n" "For the users in China, you could install with the command:\n" "\npip3 install -U funasr -i https://mirror.sjtu.edu.cn/pypi/web/simple"
+                raise Exception("You are exporting onnx, please install funasr and try it again. To install funasr, you could:\n" "\npip3 install -U funasr\n" "For the users in China, you could install with the command:\n" "\npip3 install -U funasr -i https://mirror.sjtu.edu.cn/pypi/web/simple")
 
             model = AutoModel(model=model_dir)
             model_dir = model.export(type="onnx", quantize=quantize, **kwargs)
@@ -285,13 +283,11 @@ class ContextualParaformer(Paraformer):
             try:
                 from modelscope.hub.snapshot_download import snapshot_download
             except:
-                raise "You are exporting model from modelscope, please install modelscope and try it again. To install modelscope, you could:\n" "\npip3 install -U modelscope\n" "For the users in China, you could install with the command:\n" "\npip3 install -U modelscope -i https://mirror.sjtu.edu.cn/pypi/web/simple"
+                raise Exception("You are exporting model from modelscope, please install modelscope and try it again. To install modelscope, you could:\n" "\npip3 install -U modelscope\n" "For the users in China, you could install with the command:\n" "\npip3 install -U modelscope -i https://mirror.sjtu.edu.cn/pypi/web/simple")
             try:
                 model_dir = snapshot_download(model_dir, cache_dir=cache_dir)
             except:
-                raise "model_dir must be model_name in modelscope or local path downloaded from modelscope, but is {}".format(
-                    model_dir
-                )
+                raise Exception("model_dir must be model_name in modelscope or local path downloaded from modelscope, but is {}".format(model_dir))
 
         if quantize:
             model_bb_file = os.path.join(model_dir, "model_quant.onnx")
@@ -305,7 +301,7 @@ class ContextualParaformer(Paraformer):
             try:
                 from funasr import AutoModel
             except:
-                raise "You are exporting onnx, please install funasr and try it again. To install funasr, you could:\n" "\npip3 install -U funasr\n" "For the users in China, you could install with the command:\n" "\npip3 install -U funasr -i https://mirror.sjtu.edu.cn/pypi/web/simple"
+                raise Exception("You are exporting onnx, please install funasr and try it again. To install funasr, you could:\n" "\npip3 install -U funasr\n" "For the users in China, you could install with the command:\n" "\npip3 install -U funasr -i https://mirror.sjtu.edu.cn/pypi/web/simple")
 
             model = AutoModel(model=model_dir)
             model_dir = model.export(type="onnx", quantize=quantize, **kwargs)

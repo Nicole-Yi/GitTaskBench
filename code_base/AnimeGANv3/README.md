@@ -85,6 +85,8 @@ ____
 ![](https://github.com/TachibanaYoshino/AnimeGANv3/blob/master/results/AnimeGANv3_Hayao/4.jpg)      
 ![](https://github.com/TachibanaYoshino/AnimeGANv3/blob/master/results/AnimeGANv3_Hayao/29.jpg)   
 
+The path to get onnx file for AnimeGANv3_Hayao Style: https://github.com/TachibanaYoshino/AnimeGANv3/releases/download/v1.1.0/AnimeGANv3_Hayao_36.onnx
+
 <details>
 <summary><strong>   more surprise</strong>&emsp;👈</summary>    
 

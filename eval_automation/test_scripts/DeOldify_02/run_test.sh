@@ -45,7 +45,7 @@ RESULT_JSON="${RESULT_DIR}/${REPO_NAME}/results.jsonl"
 ########################################################################################################
 # 需要修改，是否涉及01 02，格式 
 TEST_SCRIPT="${SCRIPT_DIR}/${REPO_NAME}/test_script.py"
-INPUT_IMAGE="${GT_DIR}/${REPO_NAME}/gt.webp"
+INPUT_IMAGE="${GT_DIR}/${REPO_NAME}/gt.png"
 
 
 check_file_exists "${TEST_SCRIPT}"
@@ -53,16 +53,27 @@ check_file_exists "${INPUT_IMAGE}"
 
 # --- 执行核心命令 ---
 echo "=== 开始处理仓库 ${REPO_NAME} ==="
-python "${TEST_SCRIPT}" \
-    --input "${INPUT_IMAGE}" \
-    --output "${OUTPUT_SUB_DIR}/output.png" \
-    --ciede-thresh 2.0  \
-    --niqe-thresh 7.0 \
-    --result "${RESULT_JSON}"
+
+# 在 output/ 下，查找名为 output 后跟任意后缀的文件
+file=$(find "$OUTPUT_SUB_DIR" -maxdepth 1 -type f -name 'output.*' | head -n1)
+
+if [[ -n "$file" ]]; then
+    python "${TEST_SCRIPT}" \
+        --input "${INPUT_IMAGE}" \
+        --output "${file}" \
+        --ciede-thresh 2.0  \
+        --niqe-thresh 7.0 \
+        --result "${RESULT_JSON}"
+else
+    echo "No matching file found"
+fi
+
+
+
 
 # --- 检查执行结果 ---
 if [ $? -eq 0 ]; then
-    echo "[成功] 输出文件: ${OUTPUT_SUB_DIR}/output.png"
+    echo "[成功] 输出文件: ${RESULT_JSON}"
 else
     echo "[失败] 请检查以上错误信息！"
     exit 1
