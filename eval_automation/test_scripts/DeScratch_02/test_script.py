@@ -1,114 +1,99 @@
 import os
-import numpy as np
-from PIL import Image
-from tqdm import tqdm
 import argparse
+import cv2
+import numpy as np
 import json
 from datetime import datetime
 
-def evaluate_mask(pred_mask, gt_mask):
-    # 将掩码转换为布尔值，计算IoU和Dice系数
-    pred_mask = pred_mask.astype(bool)
-    gt_mask = gt_mask.astype(bool)
+def load_images(pred_dir, gt_dir):
+    pred_path = os.path.join(pred_dir, "output.png")
+    gt_path = os.path.join(gt_dir, "gt.png")
 
-    intersection = np.logical_and(pred_mask, gt_mask).sum()
-    union = np.logical_or(pred_mask, gt_mask).sum()
-    iou = intersection / union if union != 0 else 1.0
+    if not os.path.exists(pred_path) or not os.path.exists(gt_path):
+        return None, None
 
-    dice = (2 * intersection) / (pred_mask.sum() + gt_mask.sum()) if (pred_mask.sum() + gt_mask.sum()) != 0 else 1.0
+    pred_img = cv2.imread(pred_path)
+    gt_img = cv2.imread(gt_path)
 
-    return {"IoU": iou, "Dice": dice}
+    if pred_img is None or gt_img is None:
+        return None, None
 
-def main(pred_dir, gt_dir, iou_threshold=0.5, dice_threshold=0.6, result_file=None):
-    all_metrics = []
+    # 确保图像尺寸一致
+    pred_img = cv2.resize(pred_img, (gt_img.shape[1], gt_img.shape[0]))
+    return pred_img, gt_img
 
-    # 初始化Process的默认状态为True，表示文件存在且有效
-    process_result = {"Process": True, "Results": False, "TimePoint": "", "comments": ""}
-    process_result["TimePoint"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+def compute_metrics(pred_img, gt_img):
+    # 计算均方误差 (MSE)
+    mse_val = np.mean((pred_img - gt_img) ** 2)
+
+    # 计算平均绝对误差 (MAE)
+    mae_val = np.mean(np.abs(pred_img - gt_img))
+
+    return mse_val, mae_val
+
+def evaluate_quality(pred_dir, gt_dir, threshold_mse=100, threshold_mae=15, result_file=None):
+    result = {
+        "Process": True,
+        "Result": False, 
+        "TimePoint": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        "comments": ""
+    }
 
     print(f"\n开始评估任务：")
-    print(f"预测掩码路径：{pred_dir}")
-    print(f"真实掩码路径：{gt_dir}\n")
+    print(f"预测图像路径：{pred_dir}")
+    print(f"真实图像路径：{gt_dir}\n")
 
-    # 检查输入路径的有效性
     if not os.path.exists(pred_dir) or not os.path.exists(gt_dir):
-        process_result["Process"] = False
-        process_result["comments"] = "路径不存在"
-        print("❌ 预测或真实掩码路径不存在")
-        save_result(result_file, process_result)
+        result["Process"] = False
+        result["comments"] = "路径不存在"
+        print("❌ 路径不存在")
+        save_result(result_file, result)
         return
 
-    # 检查文件夹中的每个文件
-    for filename in tqdm(os.listdir(gt_dir)):
-        # 检查文件扩展名是否是图像格式
-        if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            continue
-
-        gt_path = os.path.join(gt_dir, filename)
-        
-        # 自动查找预测文件名，假设预测文件名固定为 output.png
-        pred_filename = 'output.png'  # 假设预测文件的文件名为 output.png
-        pred_path = os.path.join(pred_dir, pred_filename)
-
-        # 检查是否存在预测掩码文件
-        if not os.path.exists(pred_path):
-            print(f"⚠️ 预测文件缺失：{pred_filename}")
-            continue
-
-        # 读取真实掩码和预测掩码
-        gt_mask = np.array(Image.open(gt_path).convert("L")) > 128
-        pred_mask = np.array(Image.open(pred_path).convert("L")) > 128
-
-        # 评估并计算IoU和Dice
-        metrics = evaluate_mask(pred_mask, gt_mask)
-
-        # 判断是否通过评估阈值
-        passed = metrics["IoU"] >= iou_threshold and metrics["Dice"] >= dice_threshold
-        status = "✅ 通过" if passed else "❌ 未通过"
-
-        print(f"{filename:20s} | IoU: {metrics['IoU']:.3f} | Dice: {metrics['Dice']:.3f} | {status}")
-        all_metrics.append(metrics)
-
-    # 如果没有评估的文件，提示用户
-    if not all_metrics:
-        print("\n⚠️ 没有找到可评估的图像对，请检查文件夹路径。")
-        process_result["Process"] = False
-        process_result["comments"] = "没有可评估的图像对"
-        save_result(result_file, process_result)
+    pred_img, gt_img = load_images(pred_dir, gt_dir)
+    if pred_img is None or gt_img is None:
+        result["Process"] = False
+        result["comments"] = "预测图像或GT图像缺失或读取失败"
+        print("⚠️ 图像缺失或读取失败")
+        save_result(result_file, result)
         return
 
-    # 计算所有文件的平均结果
-    avg_metrics = {k: np.mean([m[k] for m in all_metrics]) for k in all_metrics[0].keys()}
-    print("\n📊 总体平均结果：")
-    print(f"平均 IoU ：{avg_metrics['IoU']:.3f}")
-    print(f"平均 Dice：{avg_metrics['Dice']:.3f}")
+    # 计算质量指标
+    mse_val, mae_val = compute_metrics(pred_img, gt_img)
 
-    # 判断最终的结果
-    if avg_metrics["IoU"] >= iou_threshold and avg_metrics["Dice"] >= dice_threshold:
-        process_result["Results"] = True
-        process_result["comments"] = f"所有图像通过，平均IoU: {avg_metrics['IoU']:.3f}, 平均Dice: {avg_metrics['Dice']:.3f}"
-        print(f"✅ 测试通过！")
+    print(f"均方误差（MSE）：{mse_val:.4f}")
+    print(f"平均绝对误差（MAE）：{mae_val:.2f}")
+
+    # 评估结果
+    if mse_val <= threshold_mse and mae_val <= threshold_mae:
+        result["Result"] = True
+        result["comments"] = f"测试通过，MSE={mse_val:.4f}, MAE={mae_val:.2f}"
+        print("✅ 恢复效果达标")
     else:
-        process_result["Results"] = False
-        process_result["comments"] = f"测试未通过，平均IoU: {avg_metrics['IoU']:.3f}, 平均Dice: {avg_metrics['Dice']:.3f}"
-        print(f"❌ 测试未通过")
+        result["Result"] = False
+        result["comments"] = f"测试未通过，MSE={mse_val:.4f}, MAE={mae_val:.2f}"
+        print("❌ 恢复效果未达标")
 
-    save_result(result_file, process_result)
+    save_result(result_file, result)
 
 def save_result(result_file, result):
-    # 保存测试结果到jsonl文件，若文件存在则追加
     if result_file:
         try:
+            # 确保目录存在
+            os.makedirs(os.path.dirname(result_file) or '.', exist_ok=True)
+            
+            # 确保写入时使用 utf-8 编码，避免中文字符被转义为 Unicode 编码
             with open(result_file, "a", encoding="utf-8") as f:
-                f.write(json.dumps(result, default=str) + "\n")
+                f.write(json.dumps(result, ensure_ascii=False) + "\n")
+            print(f"[成功] 输出文件: {result_file}")
         except Exception as e:
-            print(f"⚠️ 写入结果文件时发生错误：{e}")
+            print(f"⚠️ 写入结果文件失败：{e}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pred_dir', type=str, required=True, help="预测掩码图像所在文件夹")
-    parser.add_argument('--gt_dir', type=str, required=True, help="真实掩码图像所在文件夹")
-    parser.add_argument('--result', type=str, required=True, help="测试结果存储的jsonl文件路径")
+    parser.add_argument('--pred_dir', type=str, required=True, help='预测结果文件夹')
+    parser.add_argument('--gt_dir', type=str, required=True, help='原始GT文件夹')
+    parser.add_argument('--result', type=str, required=True, help='结果输出JSONL文件')
     args = parser.parse_args()
 
-    main(args.pred_dir, args.gt_dir, result_file=args.result)
+    evaluate_quality(args.pred_dir, args.gt_dir, result_file=args.result)

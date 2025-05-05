@@ -45,8 +45,8 @@ def record_result(result_file, result, comments):
     
     # 构建结果字典
     result_data = {
-        "Process": True,
-        "Results": result,
+        "Process": True,  # 这里可以设为 True，也可以根据需要动态调整
+        "Result": result,  # 这里根据验证结果设置为布尔值
         "TimePoint": time_point,
         "comments": comments
     }
@@ -54,13 +54,9 @@ def record_result(result_file, result, comments):
     # 写入 jsonl 文件
     try:
         # 如果文件不存在，创建一个新文件并写入
-        file_exists = os.path.exists(result_file)
         with open(result_file, 'a', encoding='utf-8') as file:
-            if not file_exists:
-                # 如果文件不存在，先写入一个空的 json 行（可选）
-                file.write('\n')
             json.dump(result_data, file, ensure_ascii=False, default=str)
-            file.write('\n')
+            file.write('\n')  # 每次写入新的一行
     except Exception as e:
         print(f"错误：无法写入结果文件 {result_file}，原因：{str(e)}")
 

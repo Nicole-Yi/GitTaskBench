@@ -33,7 +33,7 @@ def save_result_jsonl(process, results, comments, result_file):
     """
     record = {
         "Process": bool(process),
-        "Results": bool(results),
+        "Result": bool(results),
         "TimePoint": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         "comments": comments
     }

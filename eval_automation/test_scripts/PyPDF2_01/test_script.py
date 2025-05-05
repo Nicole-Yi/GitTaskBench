@@ -66,7 +66,7 @@ def write_result(result_file, process_status, result_status, comments):
     """将测试结果写入到 JSONL 文件"""
     result_data = {
         "Process": process_status,
-        "Results": result_status,
+        "Result": result_status,
         "TimePoint": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         "comments": comments
     }
