@@ -23,29 +23,15 @@ def cer(ref, hyp):
     return edit_ops / max(len(ref), 1)
 
 def load_transcripts(file_path):
-    """从文本文件加载说话人转录"""
-    transcripts = {}
+    """从文本文件加载转录文本"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if ':' not in line:
-                    continue
-                speaker, text = line.split(':', 1)
-                if speaker not in transcripts:
-                    transcripts[speaker] = []
-                transcripts[speaker].append(text)
-        
-        # 合并每个说话人的所有转录文本
-        for speaker in transcripts:
-            transcripts[speaker] = "".join(transcripts[speaker])
+            return f.read().replace("\n", ""), ""
     except Exception as e:
         return None, str(e)
-    
-    return transcripts, ""
 
 def evaluate(system_output_file, ground_truth_file, cer_threshold=0.05):
-    """主评估函数：对比系统输出与标准答案，逐个说话人计算 CER"""
+    """主评估函数：直接计算系统输出与标准答案的 CER"""
     # 检查文件
     process_ok, process_msg = check_file_exists(system_output_file)
     if not process_ok:
@@ -64,22 +50,15 @@ def evaluate(system_output_file, ground_truth_file, cer_threshold=0.05):
     if ground_truth is None:
         return True, False, f"加载标准答案失败: {msg}"
 
-    total_pass = True
-    results = {}
-    comments = []
+    # 计算 CER
+    score = cer(ground_truth, system_trans)
+    comments = [f"CER = {score:.4f}"]
 
-    # 遍历 ground truth 中的每个说话人
-    for speaker in ground_truth:
-        gt_text = ground_truth.get(speaker, "")
-        sys_text = system_trans.get(speaker, "") 
-        score = cer(gt_text, sys_text)
-        results[speaker] = score
-        comments.append(f"说话人 {speaker}: CER = {score:.4f}")
-        if score > cer_threshold:
-            total_pass = False
-            comments.append(f"说话人 {speaker} 的 CER ({score:.4f}) 超过阈值 {cer_threshold}")
-
-    return True, total_pass, "\n".join(comments)
+    result_ok = score <= cer_threshold
+    if not result_ok:
+        comments.append(f"CER ({score:.4f}) 超过阈值 {cer_threshold}")
+    
+    return True, result_ok, "\n".join(comments)
 
 def save_results_to_jsonl(process_ok, result_ok, comments, jsonl_file):
     """保存测试结果到JSONL文件"""
@@ -124,4 +103,4 @@ def main():
     print("测试通过！")
 
 if __name__ == "__main__":
-    main() 
+    main()
