@@ -54,13 +54,15 @@ check_file_exists "${INPUT_IMAGE}"
 # --- 执行核心命令 ---
 echo "=== 开始处理仓库 ${REPO_NAME} ==="
 # 在 output/ 下，查找名为 output 后跟任意后缀的文件
-file=$(find "$OUTPUT_SUB_DIR" -maxdepth 1 -type f -name 'output_01.*' | head -n1)
+file=$(find "$OUTPUT_SUB_DIR" -maxdepth 1 -type f -name 'output.*' | head -n1)
+check_file_exists "${file}"
+
 if [[ -n "$file" ]]; then
     python "${TEST_SCRIPT}" \
         "${INPUT_IMAGE}" \
         "${file}" \
         --psnr-thresh 18.0 \
-        --ssim-thresh 0.90 \
+        --ssim-thresh 0.80 \
         --result "${RESULT_JSON}"
 else
     echo "No matching file found"

@@ -95,7 +95,8 @@ def main():
         }
         os.makedirs(os.path.dirname(args.result), exist_ok=True)
         with open(args.result, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(record, default=str, ensure_ascii=False) + "\\n")
+            json_line = json.dumps(record, default=str, ensure_ascii=False)
+            f.write(json_line + "\n")
 
 if __name__ == "__main__":
     main()

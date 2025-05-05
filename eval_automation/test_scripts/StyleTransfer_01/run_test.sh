@@ -39,8 +39,8 @@ RESULT_JSON="${RESULT_DIR}/${REPO_NAME}/results.jsonl"
 ########################################################################################################
 # 需要修改，是否涉及01 02，格式 
 TEST_SCRIPT="${SCRIPT_DIR}/${REPO_NAME}/test_script.py"
-INPUT_IMAGE="${GT_DIR}/${REPO_NAME}/images.jpeg"
-INPUT_IMAGE_STYLE="${GT_DIR}/${REPO_NAME}/style.jpeg"
+INPUT_IMAGE="${GT_DIR}/${REPO_NAME}/images.jpg"
+INPUT_IMAGE_STYLE="${GT_DIR}/${REPO_NAME}/style.jpg"
 
 
 
