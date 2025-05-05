@@ -104,7 +104,7 @@ def save_results_to_jsonl(process_ok, result_ok, comments, jsonl_file):
     
     result_data = {
         "Process": bool(process_ok),
-        "Results": bool(result_ok),
+        "Result": bool(result_ok),
         "TimePoint": current_time,
         "comments": comments
     }

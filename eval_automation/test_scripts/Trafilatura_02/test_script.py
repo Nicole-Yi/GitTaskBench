@@ -56,7 +56,7 @@ def main():
     # 保存结果
     result = {
         "Process": True,
-        "Results": accuracy >= 0.95,
+        "Result": accuracy >= 0.95,
         "TimePoint": os.popen('date +"%Y-%m-%dT%H:%M:%S"').read().strip(),
         "comments": f"字符级准确率: {accuracy:.4f} {'满足' if accuracy >= 0.95 else '不满足'} 95% 精度要求"
     }

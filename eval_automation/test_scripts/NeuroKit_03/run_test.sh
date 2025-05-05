@@ -36,7 +36,7 @@ check_file_exists() {
 
 # 验证测试脚本和输入文件
 OUTPUT_SUB_DIR="${OUTPUT_DIR}/${REPO_NAME}"
-RESULT_JSON="${RESULT_DIR}/${REPO_NAME}/evaluation_results.jsonl"
+RESULT_JSON="${RESULT_DIR}/${REPO_NAME}/results.jsonl"
 ########################################################################################################
 # 需要修改
 TEST_SCRIPT_EVAL="${SCRIPT_DIR}/${REPO_NAME}/test_script.py"

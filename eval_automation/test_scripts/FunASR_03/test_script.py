@@ -2,8 +2,7 @@ import argparse
 import jieba
 import re
 import json
-from jiwer import wer, compute_measures
-import Levenshtein
+from jiwer import compute_measures
 from datetime import datetime
 import os
 
@@ -14,6 +13,7 @@ def parse_args():
     parser.add_argument('--groundtruth', default='gt.txt', help='Ground truth 文件路径')
     parser.add_argument('--result', default='eval_results.jsonl', help='评估结果保存的 JSONL 文件路径')
     parser.add_argument('--wer_threshold', type=float, default=0.3, help='WER 阈值，低于此值任务视为成功')
+    parser.add_argument('--punctuation_threshold', type=float, default=0.7, help='标点符号匹配度阈值，低于此值任务视为失败')
     return parser.parse_args()
 
 def preprocess_text(text):
@@ -21,6 +21,10 @@ def preprocess_text(text):
     text = re.sub(r'[^\w\s]', '', text)
     text = text.replace(" ", "")
     return " ".join(jieba.cut(text))
+
+def extract_punctuation(text):
+    """提取文本中的标点符号"""
+    return re.findall(r'[^\w\s]', text)
 
 def load_text(file_path, is_output=False):
     """加载文本文件，is_output=True 时提取 FunASR 的 text 字段"""
@@ -33,71 +37,64 @@ def load_text(file_path, is_output=False):
             if is_output:
                 match = re.search(r"'text':\s*'([^']*)'", content)
                 if match:
-                    return preprocess_text(match.group(1)), True
+                    return preprocess_text(match.group(1)), match.group(1)  # 返回预处理的文本和原始文本
                 else:
                     raise ValueError(f"无法从 {file_path} 提取 text 字段")
             else:
-                return preprocess_text(content), True
+                return preprocess_text(content), content  # 返回预处理的文本和原始文本
     except FileNotFoundError:
         return "", False
     except Exception as e:
         return "", False
 
-def evaluate(output_file, gt_file, result_file, wer_threshold):
-    """评估输出文件与 ground truth，使用 WER 和 Levenshtein 距离，并保存结果到 JSONL"""
+def evaluate(output_file, gt_file, result_file, wer_threshold, punctuation_threshold):
+    """评估输出文件与 ground truth，使用 WER 和标点符号匹配度，并保存结果到 JSONL"""
     # 初始化日志和结果
     comments = []
     process_success = False
     result_success = False
 
     # 加载并预处理文本
-    output_text, output_valid = load_text(output_file, is_output=True)
-    gt_text, gt_valid = load_text(gt_file, is_output=False)
+    output_text, output_raw = load_text(output_file, is_output=True)
+    gt_text, gt_raw = load_text(gt_file, is_output=False)
 
     # 检查文件有效性
-    if output_valid and gt_valid and output_text and gt_text:
+    if output_text and gt_text:
         process_success = True
         comments.append("输入文件存在、非空且格式正确")
     else:
         comments.append("输入文件存在问题：")
-        if not output_valid:
+        if not output_text:
             comments.append(f"输出文件 {output_file} 不存在或格式错误")
-        if not gt_valid:
+        if not gt_text:
             comments.append(f"Ground truth 文件 {gt_file} 不存在或格式错误")
-        if not output_text or not gt_text:
-            comments.append("无法加载有效文本")
 
     # 计算评估指标（仅在文件有效时）
     wer_score = None
-    normalized_lev = None
-    insertions = None
-    deletions = None
-    substitutions = None
+    punctuation_match_score = None
 
     if process_success:
         try:
-            # 计算 WER 和详细错误统计
+            # 计算 WER
             measures = compute_measures(gt_text, output_text)
             wer_score = measures['wer']
-            insertions = measures['insertions']
-            deletions = measures['deletions']
-            substitutions = measures['substitutions']
 
-            # 计算归一化 Levenshtein 距离
-            lev_distance = Levenshtein.distance(output_text.replace(" ", ""), gt_text.replace(" ", ""))
-            max_len = max(len(gt_text.replace(" ", "")), len(output_text.replace(" ", "")))
-            normalized_lev = lev_distance / max_len if max_len > 0 else 0
+            # 计算标点符号匹配度
+            output_punctuation = extract_punctuation(output_raw)
+            gt_punctuation = extract_punctuation(gt_raw)
+            punctuation_match_score = sum([1 for p in output_punctuation if p in gt_punctuation]) / max(len(output_punctuation), 1)
 
             # 记录评估结果
             comments.append(f"词错误率 (WER): {wer_score:.4f}")
-            comments.append(f"归一化 Levenshtein 距离: {normalized_lev:.4f}")
-            comments.append(f"插入错误数: {insertions}")
-            comments.append(f"删除错误数: {deletions}")
-            comments.append(f"替换错误数: {substitutions}")
+            comments.append(f"标点符号匹配度: {punctuation_match_score:.4f}")
 
             # 判断任务是否成功
-            result_success = wer_score <= wer_threshold
-            comments.append(f"任务{'成功完成' if result_success else '失败'}（WER {'低于' if result_success else '高于'}阈值 {wer_threshold}）")
+            if wer_score <= wer_threshold and punctuation_match_score >= punctuation_threshold:
+                result_success = True
+                comments.append(f"任务成功完成（WER 和标点符号都满足阈值）")
+            else:
+                result_success = False
+                comments.append(f"任务失败（WER {'高于' if wer_score > wer_threshold else '低于'}阈值 {wer_threshold}，标点符号匹配度 {'低于' if punctuation_match_score < punctuation_threshold else '满足'}阈值 {punctuation_threshold}）")
         except Exception as e:
             comments.append(f"评估过程中发生异常: {str(e)}")
     else:
@@ -126,4 +123,4 @@ if __name__ == "__main__":
     # 解析命令行参数
     args = parse_args()
     # 运行评估
-    evaluate(args.output, args.groundtruth, args.result, args.wer_threshold)
+    evaluate(args.output, args.groundtruth, args.result, args.wer_threshold, args.punctuation_threshold)
