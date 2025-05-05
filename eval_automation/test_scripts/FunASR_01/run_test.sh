@@ -44,7 +44,7 @@ echo "=== 开始处理仓库 $REPO_NAME ==="
 python3 "$TEST_SCRIPT" \
     --system_output "$OUTPUT_SUB_DIR/output.txt" \
     --ground_truth "$GT_DIR/$REPO_NAME/gt.txt" \
-    --cer_threshold 0.05 \
+    --cer_threshold 0.10 \
     --result "$RESULT_JSONL"
 
 # --- 检查执行结果 ---

@@ -36,13 +36,16 @@ RESULT_JSONL="$RESULT_DIR/$REPO_NAME/results.jsonl"
 TEST_SCRIPT="$SCRIPT_DIR/test_script.py"
 
 check_file_exists "$TEST_SCRIPT"
-check_file_exists "$OUTPUT_SUB_DIR/output.wav"
-check_file_exists "$GT_DIR/$REPO_NAME/gt.wav"
+check_file_exists "$GT_DIR/$REPO_NAME/input_original.wav"
+check_file_exists "$GT_DIR/$REPO_NAME/infer_boy.wav"
+check_file_exists "$GT_DIR/$REPO_NAME/infer_girl.wav"
 
 # --- 执行核心命令 ---
 echo "=== 开始处理仓库 $REPO_NAME ==="
 python3 "$TEST_SCRIPT" \
-    --reference_dir "$GT_DIR/$REPO_NAME" \
+    --mixed_wav "$GT_DIR/$REPO_NAME/input_original.wav" \
+    --clean_wav_1 "$GT_DIR/$REPO_NAME/infer_boy.wav" \
+    --clean_wav_2 "$GT_DIR/$REPO_NAME/infer_girl.wav" \
     --estimated_dir "$OUTPUT_SUB_DIR" \
     --snr_threshold 12.0 \
     --sdr_threshold 8.0 \

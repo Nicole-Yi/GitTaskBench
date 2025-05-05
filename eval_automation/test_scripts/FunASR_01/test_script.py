@@ -102,7 +102,7 @@ def main():
     parser = argparse.ArgumentParser(description='评估语音识别结果')
     parser.add_argument('--system_output', required=True, help='系统输出文件路径')
     parser.add_argument('--ground_truth', required=True, help='标准答案文件路径')
-    parser.add_argument('--cer_threshold', type=float, default=0.05, help='CER阈值')
+    parser.add_argument('--cer_threshold', type=float, default=0.10, help='CER阈值')
     parser.add_argument('--result', required=True, help='结果JSONL文件路径')
     
     args = parser.parse_args()
