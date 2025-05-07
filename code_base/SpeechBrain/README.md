@@ -71,6 +71,30 @@ asr_model.transcribe_file("speechbrain/asr-conformer-transformerlm-librispeech/e
 
 - 🎓 **Educational Tool**: SpeechBrain's simplicity makes it a valuable educational resource. It is used by institutions like [Mila](https://mila.quebec/en/), [Concordia University](https://www.concordia.ca/), [Avignon University](https://univ-avignon.fr/en/), and many others for student training.
 
+
+# EXAMPLE
+Speech Enhancement
+The goal of speech enhancement is to remove the noise that affects a recording. Speechbrain has several systems for speech enhancement. In the following, you can find an example processed by the SepFormer (the version trained to perform enhancement):
+
+```python
+from speechbrain.inference.separation import SepformerSeparation as separator
+import torchaudio
+
+model = separator.from_hparams(source="speechbrain/sepformer-whamr-enhancement", savedir='pretrained_models/sepformer-whamr-enhancement4')
+enhanced_speech = model.separate_file(path='/content/example_whamr.wav')
+```
+
+Speaker Verification
+The task here is to determine whether two sentences belong to the same speaker or not.
+
+```python
+from speechbrain.inference.speaker import SpeakerRecognition
+verification = SpeakerRecognition.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb", savedir="pretrained_models/spkrec-ecapa-voxceleb")
+score, prediction = verification.verify_files("/content/example1.wav", "/content/example2.flac")
+
+print(prediction, score)
+```
+
 #
 # 🚀 Quick Start
 
