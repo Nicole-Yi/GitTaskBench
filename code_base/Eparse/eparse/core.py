@@ -8,7 +8,12 @@ from io import StringIO
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import pandas as pd
-from openpyxl.utils.cell import get_column_letter
+def get_column_letter(n):
+    result = ""
+    while n > 0:
+        n, remainder = divmod(n - 1, 26)
+        result = chr(remainder + ord('A')) + result
+    return result
 
 TableRef = Tuple[int, int, str, str]  # r, c, excel RC, value
 
