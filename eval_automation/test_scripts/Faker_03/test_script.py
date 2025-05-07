@@ -59,7 +59,7 @@ def record_result(result_file, result, comments):
     # 构建结果字典
     result_data = {
         "Process": True,
-        "Result": result,
+        "Results": result,
         "TimePoint": time_point,
         "comments": comments
     }

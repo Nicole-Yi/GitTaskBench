@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 import argparse
 import cv2
@@ -11,7 +10,7 @@ from skimage.metrics import structural_similarity as ssim
 def evaluate_quality(pred_dir, gt_dir, threshold_ssim=0.65, threshold_psnr=15, result_file=None):
     result = {
         "Process": True,
-        "Result": False,  # 修正为单数形式
+        "Results": False,
         "TimePoint": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         "comments": ""
     }
@@ -47,27 +46,22 @@ def evaluate_quality(pred_dir, gt_dir, threshold_ssim=0.65, threshold_psnr=15, r
         save_result(result_file, result)
         return
 
-    # 确保图像尺寸一致
     pred_img = cv2.resize(pred_img, (gt_img.shape[1], gt_img.shape[0]))
-    
-    # 转换为灰度图
     pred_gray = cv2.cvtColor(pred_img, cv2.COLOR_BGR2GRAY)
     gt_gray = cv2.cvtColor(gt_img, cv2.COLOR_BGR2GRAY)
 
-    # 计算质量指标
     ssim_val = ssim(gt_gray, pred_gray)
     psnr_val = psnr(gt_gray, pred_gray)
 
     print(f"平均结构相似性（SSIM）：{ssim_val:.4f}")
     print(f"平均峰值信噪比（PSNR）：{psnr_val:.2f}")
 
-    # 评估结果
     if ssim_val >= threshold_ssim and psnr_val >= threshold_psnr:
-        result["Result"] = True  # 修正为单数形式
+        result["Results"] = True
         result["comments"] = f"测试通过，SSIM={ssim_val:.4f}, PSNR={psnr_val:.2f}"
         print("✅ 恢复效果达标")
     else:
-        result["Result"] = False  # 修正为单数形式
+        result["Results"] = False
         result["comments"] = f"测试未通过，SSIM={ssim_val:.4f}, PSNR={psnr_val:.2f}"
         print("❌ 恢复效果未达标")
 
@@ -76,10 +70,6 @@ def evaluate_quality(pred_dir, gt_dir, threshold_ssim=0.65, threshold_psnr=15, r
 def save_result(result_file, result):
     if result_file:
         try:
-            # 确保目录存在
-            os.makedirs(os.path.dirname(result_file) or '.', exist_ok=True)
-            
-            # 确保写入时使用 utf-8 编码，避免中文字符被转义为 Unicode 编码
             with open(result_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(result, ensure_ascii=False) + "\n")
             print(f"[成功] 输出文件: {result_file}")

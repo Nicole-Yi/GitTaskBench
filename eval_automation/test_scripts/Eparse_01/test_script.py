@@ -28,29 +28,31 @@ def evaluate(pred_path, gt_path, result_path):
     # 构建结果字典
     result = {
         "Process": True,
-        "Result": similarity >= threshold,  # 改为单数形式并直接计算布尔值
-        "TimePoint": time_point,
-        "comments": f"文本相似度={similarity:.4f} (阈值={threshold})"
+        "TimePoint": time_point,  # 使用当前时间
+        "comments": ""
     }
 
     # 处理测试结果
-    if result["Result"]:
-        print(f"✅ 测试通过！{result['comments']}")
+    if similarity >= threshold:
+        result["Results"] = True
+        result["comments"] = f"✅ 测试通过！文本相似度={similarity:.4f} ≥ {threshold}"
+        print(result["comments"])
     else:
-        print(f"❌ 测试未通过。{result['comments']}")
-
-    # 确保结果目录存在
-    os.makedirs(os.path.dirname(result_path) or '.', exist_ok=True)
+        result["Results"] = False
+        result["comments"] = f"❌ 测试未通过。文本相似度={similarity:.4f} < {threshold}"
+        print(result["comments"])
 
     # 将结果写入 JSONL 文件
     try:
         with open(result_path, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(result, ensure_ascii=False) + '\n')
+            json.dump(result, f, ensure_ascii=False)
+            f.write('\n')  # 每个结果一行
     except Exception as e:
         print(f"❌ 写入结果失败: {e}")
         return False
 
     return True
+
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate text similarity between predicted and ground truth texts.")
@@ -66,6 +68,7 @@ def main():
         exit(1)
     else:
         print(f"✅ 测试完成，结果已保存到: {args.result}")
+
 
 if __name__ == "__main__":
     main()

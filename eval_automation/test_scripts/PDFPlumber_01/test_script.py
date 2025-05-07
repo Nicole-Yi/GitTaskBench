@@ -60,7 +60,7 @@ def evaluate(pred_file, truth_file, result_file):
     # 生成结果数据
     result_data = {
         "Process": process_status,
-        "Result": result_status,
+        "Results": result_status,
         "TimePoint": time_point,
         "comments": comments
     }

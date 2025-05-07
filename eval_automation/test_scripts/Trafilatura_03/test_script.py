@@ -55,7 +55,7 @@ def compare_txt_files(extracted_txt_path, ground_truth_txt_path, result_file):
         # 写入jsonl结果
         result_data = {
             "Process": process_status,
-            "Result": results_status,
+            "Results": results_status,
             "TimePoint": time_point,
             "comments": comments
         }

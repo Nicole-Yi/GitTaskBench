@@ -29,7 +29,7 @@ def evaluate(pred_file, gt_file):
 
 def save_result(result_path, data):
     """保存结果到jsonl文件"""
-    os.makedirs(os.path.dirname(result_path) or '.', exist_ok=True)
+    os.makedirs(os.path.dirname(result_path), exist_ok=True)
     with open(result_path, "a", encoding="utf-8") as f:
         f.write(json.dumps(data, ensure_ascii=False, default=str) + "\n")
 

@@ -89,7 +89,7 @@ def main():
     if args.result:
         record = {
             "Process": process_ok,
-            "Result": results_ok,
+            "Results": results_ok,
             "TimePoint": datetime.now().isoformat(),
             "comments": "; ".join(comments)
         }

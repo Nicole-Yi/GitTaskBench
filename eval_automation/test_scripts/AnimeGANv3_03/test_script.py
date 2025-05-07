@@ -169,7 +169,6 @@ def main():
     print("\n".join(messages))
     
     # 如果指定了 --result，保存到 JSONL
-# 在main()函数中修改结果保存部分：
     if args.result:
         result_entry = {
             "Process": process_valid,
@@ -178,13 +177,11 @@ def main():
             "comments": "\n".join(messages)
         }
         try:
-            os.makedirs(os.path.dirname(args.result) or '.', exist_ok=True)
             with open(args.result, 'a', encoding='utf-8') as f:
                 json_line = json.dumps(result_entry, ensure_ascii=False, default=str)
-                f.write(json_line + '\n')  # 确保换行追加
+                f.write(json_line + '\n')
         except Exception as e:
             print(f"错误：无法保存结果到 {args.result}，原因：{str(e)}")
-
     
 if __name__ == "__main__":
     main()

@@ -46,7 +46,7 @@ def evaluate(pred_file, truth_file, result_file):
     # 创建结果对象
     result_data = {
         "Process": True,
-        "Result": result,
+        "Results": result,
         "TimePoint": time_point,
         "comments": " ".join(comments)
     }

@@ -57,9 +57,9 @@ def evaluate_blur_background(input_path, output_path):
     
     # 保存掩码用于调试
     background_mask_img = Image.fromarray(background_mask.astype(np.uint8) * 255)
-
+    background_mask_img.save('background_mask.png')
     foreground_mask_img = Image.fromarray(foreground_mask.astype(np.uint8) * 255)
-
+    foreground_mask_img.save('foreground_mask.png')
     
     # 指标 1：背景模糊度 (BBI)
     # 计算背景区域的平均边缘强度（越低越模糊）
@@ -139,9 +139,10 @@ def save_result_to_jsonl(result_path, process, result, comments):
     # 生成时间戳
     time_point = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     
+    # 构建 JSONL 记录
     record = {
-        "Process": bool(process),  # 确保是布尔值
-        "Result": bool(result),    # 确保是布尔值
+        "Process": process,
+        "Result": result,
         "TimePoint": time_point,
         "comments": comments
     }

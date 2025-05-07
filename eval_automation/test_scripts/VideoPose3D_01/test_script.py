@@ -109,7 +109,7 @@ def save_results_to_jsonl(process_status, test_passed, comments, result_file):
     # 准备要保存的数据
     result_data = {
         "Process": process_status,
-        "Result": test_passed,
+        "Results": test_passed,
         "TimePoint": current_time,
         "comments": comments
     }

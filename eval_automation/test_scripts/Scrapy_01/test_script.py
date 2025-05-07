@@ -21,7 +21,7 @@ def evaluate_scrapy_output(pred_path: str, truth_path: str, result_path: str = N
     if not process_success:
         result = {
             "Process": False,
-            "Result": False,
+            "Results": False,
             "TimePoint": datetime.now().isoformat(),
             "comments": f"❌ 文件不存在或为空: pred={pred_path}, truth={truth_path}"
         }
@@ -57,7 +57,7 @@ def evaluate_scrapy_output(pred_path: str, truth_path: str, result_path: str = N
         if result_path:
             result = {
                 "Process": True,
-                "Result": result_passed,
+                "Results": result_passed,
                 "TimePoint": datetime.now().isoformat(),
                 "comments": f"字段级准确率: {accuracy:.4f}，{'满足' if result_passed else '不满足'} 95% 阈值"
             }
@@ -71,7 +71,7 @@ def evaluate_scrapy_output(pred_path: str, truth_path: str, result_path: str = N
         if result_path:
             result = {
                 "Process": True,
-                "Result": False,
+                "Results": False,
                 "TimePoint": datetime.now().isoformat(),
                 "comments": f"运行异常: {str(e)}"
             }

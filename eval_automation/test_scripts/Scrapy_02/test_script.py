@@ -21,7 +21,7 @@ def evaluate_scraping(pred_file: str, gt_file: str, threshold: float = 0.95, res
     if not process_success:
         result = {
             "Process": False,
-            "Result": False,
+            "Results": False,
             "TimePoint": datetime.now().isoformat(),
             "comments": f"❌ 文件不存在或为空: pred={pred_file}, gt={gt_file}"
         }
@@ -76,7 +76,7 @@ def evaluate_scraping(pred_file: str, gt_file: str, threshold: float = 0.95, res
     if result_file:
         result = {
             "Process": True,
-            "Result": success,
+            "Results": success,
             "TimePoint": datetime.now().isoformat(),
             "comments": f"字段级准确率: {accuracies}, {'满足' if success else '不满足'} 95% 阈值"
         }

@@ -19,7 +19,7 @@ def evaluate(pred_path, gt_path):
     # 结果字典初始化
     result = {
         "Process": True,
-        "Result": False,  # 统一使用单数形式
+        "Results": False,
         "TimePoint": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         "comments": ""
     }
@@ -32,7 +32,7 @@ def evaluate(pred_path, gt_path):
 
     if not gt_text:
         result["comments"] = "❌ ground truth为空！"
-        result["Result"] = False
+        result["Results"] = False
         return result
 
     # 计算字符级准确率
@@ -43,22 +43,23 @@ def evaluate(pred_path, gt_path):
 
     # 根据准确率判断结果
     if accuracy >= threshold:
-        result["Result"] = True  # 统一使用单数形式
+        result["Results"] = True
         result["comments"] = f"✅ 测试通过！字符级Accuracy={accuracy:.4f} ≥ {threshold}"
     else:
-        result["Result"] = False  # 统一使用单数形式
+        result["Results"] = False
         result["comments"] = f"❌ 测试未通过。字符级Accuracy={accuracy:.4f} < {threshold}"
 
     return result
 
 def save_result(result, result_file):
     """保存结果到 jsonl 文件"""
-    # 确保目录存在
-    os.makedirs(os.path.dirname(result_file) or '.', exist_ok=True)
-    
-    # 追加模式写入，确保每条记录单独一行
+    # 如果文件不存在，则新建文件；如果文件存在，直接追加
+    file_exists = os.path.exists(result_file)
     with open(result_file, "a", encoding="utf-8") as f:
-        f.write(json.dumps(result, ensure_ascii=False) + "\n")
+        # 由于 jsonl 格式每行是一个单独的 JSON 对象，所以我们每次写入一行
+        if file_exists:
+            f.write("\n")  # 换行添加新数据
+        json.dump(result, f, ensure_ascii=False, default=str)  # 序列化结果并写入文件
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate output by text similarity and save results")

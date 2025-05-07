@@ -74,7 +74,7 @@ def evaluate_scraping_xml(pred_file, gt_file, threshold=0.95, result_file=None):
     if result_file:
         result = {
             "Process": True,
-            "Result": success,
+            "Results": success,
             "TimePoint": datetime.now().isoformat(),
             "comments": f"字段级准确率: {accuracies}, {'满足' if success else '不满足'} 95% 阈值"
         }

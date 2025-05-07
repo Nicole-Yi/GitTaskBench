@@ -174,7 +174,7 @@ def save_result_to_jsonl(result_path, process, result, comments):
 
     record = {
         "Process": bool(process),   # 强制转为 Python bool
-        "Result": bool(result),    # 强制转为 Python bool
+        "Results": bool(result),    # 强制转为 Python bool
         "TimePoint": time_point,
         "comments": comments
     }

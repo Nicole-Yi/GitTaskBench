@@ -63,19 +63,14 @@ def evaluate_task(input_img_path, output_img_path, result_path=None):
         process_result = os.path.exists(input_img_path) and os.path.exists(output_img_path)
         results = {
             "Process": process_result,
-            "Result": result == "成功",  # 如果结果是"成功"，则为 True
+            "Results": result == "成功",  # 如果结果是"成功"，则为 True
             "TimePoint": time_point,
             "comments": f"PSNR: {psnr_value:.2f}, 任务结果: {result}"
         }
 
-        # 打印 JSON 数据，查看是否包含中文
-        print(json.dumps(results, ensure_ascii=False, default=str))
-        
-        # 然后再保存到文件
-        with open(result_path, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(results, ensure_ascii=False, default=str) + "\n")
-
-
+        # 以追加的方式保存结果
+        with open(result_path, 'a') as f:
+            f.write(json.dumps(results, default=str) + "\n")
 
     return psnr_value, result
 
