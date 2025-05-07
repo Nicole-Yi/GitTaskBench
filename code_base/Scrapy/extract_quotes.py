@@ -23,12 +23,20 @@ while next_page:
     next_button = soup.select_one('li.next a')
     next_page = f"{base_url}{next_button['href']}" if next_button else None
 
-import csv
+import xml.etree.ElementTree as ET
 
-output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Scrapy_02/output.csv'
+# Define the root element
+root = ET.Element('quotes')
 
-with open(output_path, 'w', newline='', encoding='utf-8') as f:
-    writer = csv.DictWriter(f, fieldnames=['author', 'text'])
-    writer.writeheader()
-    for quote in quotes_list:
-        writer.writerow({'author': quote['author'], 'text': quote['text']})
+# Add quote elements
+for quote in quotes_list:
+    quote_elem = ET.SubElement(root, 'quote')
+    text_elem = ET.SubElement(quote_elem, 'text')
+    text_elem.text = quote['text']
+    author_elem = ET.SubElement(quote_elem, 'author')
+    author_elem.text = quote['author']
+
+# Create and write to XML file
+output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Scrapy_03/output.xml'
+tree = ET.ElementTree(root)
+tree.write(output_path, encoding='utf-8', xml_declaration=True)
