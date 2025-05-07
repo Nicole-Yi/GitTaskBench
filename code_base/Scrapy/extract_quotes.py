@@ -23,5 +23,12 @@ while next_page:
     next_button = soup.select_one('li.next a')
     next_page = f"{base_url}{next_button['href']}" if next_button else None
 
-with open('/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Scrapy_01/output.json', 'w') as f:
-    json.dump(quotes_list, f, ensure_ascii=False, indent=2)
+import csv
+
+output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Scrapy_02/output.csv'
+
+with open(output_path, 'w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=['author', 'text'])
+    writer.writeheader()
+    for quote in quotes_list:
+        writer.writerow({'author': quote['author'], 'text': quote['text']})
