@@ -1,19 +1,17 @@
 import os
 import sys
 import tqdm
-import wget
-import gdown
-import torch
+# import torch
 import shutil
 import base64
 import warnings
 import importlib
 
 import numpy as np
-import torch.nn.functional as F
-import torchvision.transforms as transforms
-import albumentations as A
-import albumentations.pytorch as AP
+# import torch.nn.functional as F
+# import torchvision.transforms as transforms
+# import albumentations as A
+# import albumentations.pytorch as AP
 
 from PIL import Image
 from io import BytesIO
@@ -77,21 +75,29 @@ class Remover:
 
             if download:
                 if 'drive.google.com' in self.meta.url:
-                    gdown.download(self.meta.url, os.path.join(ckpt_dir, ckpt_name), fuzzy=True, proxy=self.meta.http_proxy)
+                    # using urllib.request to replace gdown
+                    import urllib.request
+                    response = urllib.request.urlopen(self.meta.url)
+                    with open(os.path.join(ckpt_dir, ckpt_name), 'wb') as out_file:
+                        out_file.write(response.read())
                 elif 'github.com' in self.meta.url:
-                    wget.download(self.meta.url, os.path.join(ckpt_dir, ckpt_name))
+                    # using urllib.request to replace wget
+                    import urllib.request
+                    response = urllib.request.urlopen(self.meta.url)
+                    with open(os.path.join(ckpt_dir, ckpt_name), 'wb') as out_file:
+                        out_file.write(response.read())
                 else:
                     raise NotImplementedError('Please use valid URL')
         else:
             ckpt_dir, ckpt_name = os.path.split(os.path.abspath(ckpt))
 
         self.model = InSPyReNet_SwinB(depth=64, pretrained=False, threshold=None, **self.meta)
-        self.model.eval()
-        self.model.load_state_dict(
-            torch.load(os.path.join(ckpt_dir, ckpt_name), map_location="cpu", weights_only=True),
-            strict=True,
-        )
-        self.model = self.model.to(self.device)
+        # self.model.eval()
+        # self.model.load_state_dict(
+        #     torch.load(os.path.join(ckpt_dir, ckpt_name), map_location="cpu", weights_only=True),
+        #     strict=True,
+        # )
+        # self.model = self.model.to(self.device)
 
         if jit:
             ckpt_name = self.meta.ckpt_name.replace(
