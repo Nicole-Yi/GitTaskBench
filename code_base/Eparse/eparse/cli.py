@@ -333,6 +333,32 @@ def parse(ctx, sheet, serialize, table, nacount):
 
 @main.command()
 @click.pass_context
+@click.option('--input-dir', '-i', type=str, required=True, help='Directory containing Excel files to scan.')
+@click.option('--output-file', '-o', type=str, required=True, help='Output text file to save Excel file and sheet data.')
+def scan_excel(ctx, input_dir, output_file):
+    """
+    Scan a directory for Excel files, list their filenames and sheet names, 
+    and save to a specified text file.
+    """
+    from openpyxl import load_workbook
+    import os
+
+    results = []
+    for root, dirs, files in os.walk(input_dir):
+        for file in files:
+            if file.endswith('.xlsx') or file.endswith('.xls'):
+                file_path = os.path.join(root, file)
+                wb = load_workbook(filename=file_path, read_only=True)
+                sheets = wb.sheetnames
+                results.append(f"{file} : {', '.join(sheets)}")
+                wb.close()
+
+    with open(output_file, 'w') as f:
+        f.write('\n'.join(results))
+
+    ctx.obj['output_obj'].output(f'Excel data saved to {output_file}', ctx)
+@main.command()
+@click.pass_context
 @click.option(
     "--filter",
     "-f",
