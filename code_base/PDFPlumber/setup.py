@@ -1,3 +1,9 @@
+import pkg_resources
+
+# Print available distributions
+installed_packages = pkg_resources.working_set
+installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
+print(installed_packages_list)
 import os
 
 from setuptools import setup, find_packages
