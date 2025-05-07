@@ -5,8 +5,8 @@ from skimage.io import imread, imsave
 from ISR.models.rrdn import RRDN
 
 # Load input image
-input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/SuperResolution_02/input/SuperResolution_02_input.jpg'
-output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SuperResolution_02'
+input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/SuperResolution_03/input/SuperResolution_03_input.png'
+output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SuperResolution_03'
 os.makedirs(output_dir, exist_ok=True)
 input_image = imread(input_path)
 
@@ -19,7 +19,7 @@ rrdn.model.load_weights(weights_path)
 predict_image = rrdn.predict(input_image)
 
 # Save output image
-output_path = os.path.join(output_dir, 'output.jpg')
+output_path = os.path.join(output_dir, 'output.png')
 imsave(output_path, predict_image)
 
 print(f'Super-resolution completed. Output saved at {output_path}')

@@ -304,3 +304,23 @@ def select_dataset(session_type, conf):
         dataset = datasets[select_option(datasets)]
         
         return dataset
+import numpy as np
+import cv2
+from ISR.models import RRDN
+
+# Input and output parameters
+input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/SuperResolution_03/input/SuperResolution_03_input.png'
+output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SuperResolution_03/output.png'
+
+# Load input image using cv2
+image = cv2.imread(input_path, cv2.IMREAD_COLOR)
+image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+# Initialize the super-resolution model
+model = RRDN(weights='gans')
+
+# Predict the high-resolution image
+sr_image = model.predict(image)
+
+# Save the super-resolved image using cv2
+cv2.imwrite(output_path, cv2.cvtColor(sr_image, cv2.COLOR_RGB2BGR))
