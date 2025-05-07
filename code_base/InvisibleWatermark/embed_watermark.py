@@ -4,10 +4,10 @@ from imwatermark import WatermarkEncoder
 import os
 
 # Input image path
-input_image_path = '/data/data/agent_test_codebase/GitTaskBench/queries/InvisibleWatermark_01/input/InvisibleWatermark_01_input.png'
+input_image_path = '/data/data/agent_test_codebase/GitTaskBench/queries/InvisibleWatermark_03/input/InvisibleWatermark_03_input.png'
 
 # Output directory path
-output_directory = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/InvisibleWatermark_01'
+output_directory = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/InvisibleWatermark_03'
 
 # Check if output directory exists, if not create one
 if not os.path.exists(output_directory):
@@ -20,7 +20,7 @@ output_image_path = os.path.join(output_directory, 'output.png')
 bgr = cv2.imread(input_image_path)
 
 # Define the watermark
-watermark = 'invisible'
+watermark = 'watermark'
 
 # Initialize the WatermarkEncoder
 encoder = WatermarkEncoder()
