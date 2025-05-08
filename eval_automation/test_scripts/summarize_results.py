@@ -3,8 +3,9 @@ import logging
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 import os # Import os for listdir
+import re # Import re for log parsing
 
 # Try importing rich, provide instructions if not found
 try:
@@ -25,6 +26,53 @@ except ImportError:
 
 # 使用 Rich Console
 console = Console()
+
+
+def parse_execution_log(log_file_path: Path) -> Dict[str, Dict[str, Any]]:
+    """Parses the all_tests.log file to extract execution status of each test.
+
+    Args:
+        log_file_path: Path to the all_tests.log file.
+
+    Returns:
+        A dictionary mapping test names to their execution status.
+        Example: {'TestName_01': {'status': 'success', 'exit_code': 0},
+                  'TestName_02': {'status': 'failed', 'exit_code': 1}}
+    """
+    execution_statuses: Dict[str, Dict[str, Any]] = {}
+    try:
+        with log_file_path.open("r", encoding="utf-8") as f:
+            current_test_name: Optional[str] = None
+            for line in f:
+                line = line.strip()
+                # Regex to find the start of a test execution
+                start_match = re.search(r"Executing test for: (\S+)", line)
+                if start_match:
+                    current_test_name = start_match.group(1)
+                    if current_test_name not in execution_statuses: # Initialize if not seen
+                        execution_statuses[current_test_name] = {"status": "unknown", "exit_code": None}
+                    continue
+
+                if current_test_name:
+                    # Regex to find successful execution
+                    success_match = re.search(r"Execution successful for: {}".format(re.escape(current_test_name)), line)
+                    if success_match:
+                        execution_statuses[current_test_name] = {"status": "success", "exit_code": 0}
+                        current_test_name = None # Reset for next test block
+                        continue
+
+                    # Regex to find failed execution and capture exit code
+                    fail_match = re.search(r"Execution FAILED for: {} \(Exit Code: (\d+)\)".format(re.escape(current_test_name)), line)
+                    if fail_match:
+                        exit_code = int(fail_match.group(1))
+                        execution_statuses[current_test_name] = {"status": "failed", "exit_code": exit_code}
+                        current_test_name = None # Reset for next test block
+                        continue
+    except FileNotFoundError:
+        console.print(f":x: [bold red]Execution log file not found:[/bold red] {log_file_path}")
+    except Exception as e:
+        console.print(f":x: [bold red]Error reading execution log {log_file_path}:[/bold red] {e}")
+    return execution_statuses
 
 
 def find_latest_result(file_path: Path) -> Dict[str, Any] | None:
@@ -62,135 +110,160 @@ def find_latest_result(file_path: Path) -> Dict[str, Any] | None:
     return last_result
 
 
-def generate_summary(results_dir: Path, summary_file: Path) -> None:
-    """Generates a summary report from all results.jsonl files.
+def generate_summary(results_dir: Path, summary_file: Path, execution_log_file: Path) -> None:
+    """Generates a summary report from all results.jsonl files and execution log.
 
     Args:
         results_dir: Path to the directory containing test result subdirectories.
         summary_file: Path to save the summary report.
+        execution_log_file: Path to the all_tests.log file.
     """
-    # --- Calculate Expected Tests ---
+    # --- Parse Execution Log ---
+    execution_statuses = parse_execution_log(execution_log_file)
+    if not execution_statuses:
+        console.print(":warning: [yellow]Could not parse any execution statuses from log.[/]")
+        # Decide if to proceed or exit; for now, proceed but metrics will be affected
+
+    # --- Calculate Expected Tests (from test_scripts directory) ---
     test_scripts_dir = results_dir.parent / "test_scripts"
-    expected_tests_count = 0
+    expected_tests_from_scripts_count = 0
+    all_script_test_names: List[str] = []
     if test_scripts_dir.is_dir():
-        # Count directories directly under test_scripts_dir
-        expected_tests_count = sum(1 for item in test_scripts_dir.iterdir() if item.is_dir())
+        all_script_test_names = sorted([item.name for item in test_scripts_dir.iterdir() if item.is_dir()])
+        expected_tests_from_scripts_count = len(all_script_test_names)
     else:
         console.print(f":warning: [yellow]Could not find test scripts directory:[/yellow] {test_scripts_dir}")
 
+    # --- Initialize Counters based on Execution Status ---
+    total_attempted_scripts = expected_tests_from_scripts_count # Assuming all dirs in test_scripts were attempted
+    scripts_execution_successful = 0
+    scripts_execution_failed = 0
 
-    # --- Process Found Results ---
-    found_results_count = 0
-    successful_tests = 0
-    failed_tests = 0
-    processed_but_failed = 0
-    not_processed = 0
-    failures: List[Tuple[str, str]] = [] # (test_name, comments)
-    successes: List[str] = [] # test_name
+    content_validation_passed = 0  # For scripts that executed successfully
+    content_validation_failed = 0  # For scripts that executed successfully
+    
+    execution_failure_details: List[Tuple[str, str]] = []  # (test_name, reason like "Exit Code: X")
+    content_failure_details: List[Tuple[str, str]] = []    # (test_name, comments from jsonl or missing file)
+    
+    processed_jsonl_count = 0 # Count of successfully parsed results.jsonl files
 
-    result_files = sorted(list(results_dir.rglob("**/results.jsonl"))) # Sort for consistent order
-    found_results_count = len(result_files)
+    plain_summary_lines = []
 
-    plain_summary_lines = [] # For the text file
-
-    if not result_files and expected_tests_count == 0:
-         warning_message = f"No 'results.jsonl' files found in {results_dir} and no test script directories found in {test_scripts_dir}"
-         console.print(f":warning: [yellow]{warning_message}[/]")
-         plain_summary_lines.append(warning_message)
-         summary_content = "No result files or test directories found."
-    elif not result_files and expected_tests_count > 0:
-        warning_message = f"Expected {expected_tests_count} tests based on directories, but found no 'results.jsonl' files in {results_dir}"
+    if not all_script_test_names:
+        warning_message = f"No test script directories found in {test_scripts_dir}. Cannot determine attempted tests."
         console.print(f":warning: [yellow]{warning_message}[/]")
         plain_summary_lines.append(warning_message)
-        summary_content = f"Expected {expected_tests_count} tests, found 0 result files."
-        # Still generate the summary table structure but show 0 for found/success/fail
-        total_tests = 0 # Use 0 for calculations if no results found
+        summary_content = "No test script directories found."
     else:
-        console.print(f":information_source: [cyan]Expected Tests (based on dirs): {expected_tests_count}[/]")
-        console.print(f":information_source: [cyan]Found {found_results_count} result files.[/]")
-        total_tests = found_results_count # Use found count for processing loop
-        for result_file in result_files:
-            test_name = result_file.parent.name # Get the directory name (e.g., DeOldify_02)
-            # console.print(f"Processing {test_name} from {result_file}...") # Reduced verbosity
-            # total_tests += 1 # Now counted above based on found files
+        console.print(f":information_source: [cyan]Attempting to summarize based on {total_attempted_scripts} test scripts found in {test_scripts_dir}[/]")
 
-            latest_result = find_latest_result(result_file)
+        for test_name in all_script_test_names:
+            exec_status_info = execution_statuses.get(test_name)
 
-            if latest_result:
-                process_status = latest_result.get("Process", False)
-                result_status = latest_result.get("Result", False)
-                comments = latest_result.get("comments", "No comments available.")
+            if exec_status_info and exec_status_info["status"] == "success":
+                scripts_execution_successful += 1
+                # Now check content validation for successfully executed scripts
+                result_file_path = results_dir / test_name / "results.jsonl"
+                latest_result = find_latest_result(result_file_path)
+                if latest_result:
+                    processed_jsonl_count +=1
+                    process_status_json = latest_result.get("Process", False)
+                    result_status_json = latest_result.get("Result", False)
+                    comments_json = latest_result.get("comments", "No comments available.")
 
-                if process_status and result_status:
-                    successful_tests += 1
-                    successes.append(test_name)
-                    # console.print(f"  -> [green]Success[/]") # Reduced verbosity
-                elif process_status and not result_status:
-                    failed_tests += 1
-                    processed_but_failed += 1
-                    failures.append((test_name, comments))
-                    console.print(f"  :warning: [yellow]{test_name}: Processed but Failed.[/] Reason: {comments}")
-                elif not process_status:
-                    failed_tests += 1
-                    not_processed += 1
-                    failures.append((test_name, f"Processing failed. {comments}"))
-                    console.print(f"  :x: [red]{test_name}: Processing Failed.[/] Reason: {comments}")
-                else:
-                    failed_tests += 1
-                    failures.append((test_name, f"Unknown status: Process={process_status}, Result={result_status}. {comments}"))
-                    console.print(f"  :question: [magenta]{test_name}: Unknown Status.[/] Reason: {comments}")
-            else:
-                failed_tests += 1
-                # Consider if this should be 'not_processed' or a separate category like 'parsing_failed'
-                # Sticking with 'not_processed' for now as it implies the result wasn't usable
-                not_processed += 1
-                failures.append((test_name, "Could not read or parse result file."))
-                console.print(f"  :x: [red]{test_name}: Failed (Could not read/parse result file)[/]")
+                    if process_status_json and result_status_json:
+                        content_validation_passed += 1
+                    else: # Processed but content result failed, or not processed according to json
+                        content_validation_failed += 1
+                        reason = comments_json
+                        if not process_status_json:
+                            reason = f"JSON indicates not processed. {comments_json}"
+                        content_failure_details.append((test_name, reason))
+                else: # results.jsonl not found or unparseable for a successfully executed script
+                    content_validation_failed += 1
+                    content_failure_details.append((test_name, "results.jsonl missing or invalid after successful script execution."))
+            
+            elif exec_status_info and exec_status_info["status"] == "failed":
+                scripts_execution_failed += 1
+                exit_code = exec_status_info.get("exit_code", "N/A")
+                execution_failure_details.append((test_name, f"Script execution failed (Exit Code: {exit_code})"))
+            else: # Test name from script dir not found in execution_log or status unknown
+                scripts_execution_failed += 1 # Count as failed if status is unknown or missing
+                execution_failure_details.append((test_name, "Execution status not found in log or unknown."))
 
         # --- Generate Plain Text Summary ---
         plain_summary_lines = [
-            "==================== Test Summary ====================",
-            f"Expected Tests (Directories): {expected_tests_count}",
-            f"Found Result Files: {found_results_count}",
-            f"Successful Tests (from found files): {successful_tests}",
-            f"Failed Tests (from found files): {failed_tests}",
-            f"  - Processed but Result Failed: {processed_but_failed}",
-            f"  - Processing Not Completed/Failed or Unparseable: {not_processed}", # Updated category name slightly
-            "-------------------- Failures --------------------",
+            "==================== Test Execution Summary (Based on Script Exit Codes) ====================",
+            f"Total Test Scripts Attempted (from '{test_scripts_dir.name}' dir): {total_attempted_scripts}",
+            f"  - Scripts Execution Successful (Exit Code 0): {scripts_execution_successful}",
+            f"  - Scripts Execution Failed (Non-zero Exit Code or Unknown): {scripts_execution_failed}",
         ]
-        if failures:
-            for name, reason in failures:
+        if scripts_execution_successful > 0:
+            plain_summary_lines.extend([
+                f"Content Validation for {scripts_execution_successful} Successfully Executed Scripts (from 'results.jsonl'):",
+                f"    - Content Validation Passed ('Process': true, 'Result': true): {content_validation_passed}",
+                f"    - Content Validation Failed (or results.jsonl issues): {content_validation_failed}",
+                f"    (Successfully parsed 'results.jsonl' files for executed scripts: {processed_jsonl_count})",
+            ])
+        
+        plain_summary_lines.append("-------------------- Execution Failures (from all_tests.log) --------------------")
+        if execution_failure_details:
+            for name, reason in execution_failure_details:
                 plain_summary_lines.append(f"- {name}: {reason}")
         else:
-            plain_summary_lines.append("No failures reported among found results.")
-        plain_summary_lines.append("====================================================")
+            plain_summary_lines.append("No script execution failures reported (or all tests attempted had status in log).")
+
+        if content_failure_details:
+            plain_summary_lines.append("-------------------- Content Validation Failures (for successfully executed scripts) --------------------")
+            for name, reason in content_failure_details:
+                plain_summary_lines.append(f"- {name}: {reason}")
+        else:
+             if scripts_execution_successful > 0:
+                plain_summary_lines.append("No content validation failures for successfully executed scripts (or all passed).")
+        
+        plain_summary_lines.append("======================================================================================")
         summary_content = "\n".join(plain_summary_lines)
 
         # --- Generate Rich Console Summary ---
-        summary_table = Table(title="Test Execution Summary", show_header=True, header_style="bold magenta")
-        summary_table.add_column("Metric", style="dim", width=45) # Increased width slightly
+        summary_table = Table(title="Test Execution Summary (Based on Script Exit Codes)", show_header=True, header_style="bold magenta")
+        summary_table.add_column("Metric", style="dim", width=60) # Increased width
         summary_table.add_column("Value", style="bold")
 
-        summary_table.add_row(":clipboard: Expected Tests (Directories)", str(expected_tests_count))
-        summary_table.add_row(":file_folder: Found Result Files", str(found_results_count))
-        summary_table.add_row(":white_check_mark: Successful Tests (from found)", f"[green]{successful_tests}[/]")
-        summary_table.add_row(":x: Failed Tests (from found)", f"[red]{failed_tests}[/]")
-        summary_table.add_row("  :warning: Processed but Result Failed", str(processed_but_failed))
-        summary_table.add_row("  :no_entry: Processing Not Completed/Failed or Unparseable", str(not_processed)) # Updated category name slightly
+        summary_table.add_row(":rocket: Total Test Scripts Attempted", str(total_attempted_scripts))
+        summary_table.add_row("  :white_check_mark: Scripts Execution Successful (Exit Code 0)", f"[green]{scripts_execution_successful}[/]")
+        summary_table.add_row("  :x: Scripts Execution Failed (Non-zero Exit Code or Unknown)", f"[red]{scripts_execution_failed}[/]")
+        
+        if scripts_execution_successful > 0:
+            summary_table.add_row("--- Content Validation (for successfully executed scripts) ---", "")
+            summary_table.add_row("    :page_facing_up: Parsed 'results.jsonl' files", str(processed_jsonl_count))
+            summary_table.add_row("    :white_check_mark: Content Validation Passed", f"[green]{content_validation_passed}[/]")
+            summary_table.add_row("    :warning: Content Validation Failed (or issues with 'results.jsonl')", f"[yellow]{content_validation_failed}[/]")
+
 
         console.print("\n")
         console.print(summary_table)
 
-        if failures:
-            failures_table = Table(title="Failure Details", show_header=True, header_style="bold red")
-            failures_table.add_column("Test Name", style="yellow", width=30)
-            failures_table.add_column("Reason", style="default")
+        if execution_failure_details:
+            exec_failures_table = Table(title="Script Execution Failure Details (from all_tests.log)", show_header=True, header_style="bold red")
+            exec_failures_table.add_column("Test Name (from script dir)", style="yellow", width=30)
+            exec_failures_table.add_column("Reason", style="default")
+            for name, reason in execution_failure_details:
+                exec_failures_table.add_row(name, reason)
+            console.print(exec_failures_table)
+        
+        if content_failure_details:
+            content_failures_table = Table(title="Content Validation Failure Details (for successfully executed scripts)", show_header=True, header_style="bold orange_red1")
+            content_failures_table.add_column("Test Name", style="yellow", width=30)
+            content_failures_table.add_column("Reason (from results.jsonl or file issue)", style="default")
+            for name, reason in content_failure_details:
+                content_failures_table.add_row(name, reason)
+            console.print(content_failures_table)
 
-            for name, reason in failures:
-                failures_table.add_row(name, reason)
-            console.print(failures_table)
-        else:
-            console.print(Panel("[green]:tada: All tests passed successfully! :tada:[/]"))
+        if not execution_failure_details and not content_failure_details and scripts_execution_successful == total_attempted_scripts and content_validation_passed == scripts_execution_successful :
+             console.print(Panel("[green]:tada: All attempted scripts executed successfully AND passed content validation! :tada:[/]"))
+        elif not execution_failure_details and scripts_execution_successful == total_attempted_scripts:
+             console.print(Panel("[green]:tada: All attempted scripts executed successfully! (Check content validation details) :tada:[/]"))
+
 
     # Print to console (Rich output is already printed)
     # print("\n" + summary_content) # No longer needed for console
@@ -207,11 +280,12 @@ if __name__ == "__main__":
     script_dir = Path(__file__).parent.resolve()
     # Go up one level from script_dir (test_scripts) to the parent (eval_automation)
     # Then find the 'test_results' and 'summary_report.txt' in the parent directory
-    results_base_dir = script_dir.parent / "test_results"
+    results_base_dir = script_dir.parent / "test_results" # This is 'output' in your context
     summary_report_file = script_dir.parent / "summary_report.txt"
+    execution_log_main_file = script_dir.parent / "all_tests.log" # Path to the main log
 
     # Check if running in a terminal that supports rich features
     if not console.is_terminal:
         console.print("[yellow]Warning: Not running in a TTY. Rich features might not render correctly.[/]")
 
-    generate_summary(results_base_dir, summary_report_file) 
+    generate_summary(results_base_dir, summary_report_file, execution_log_main_file) # Pass log file path 
