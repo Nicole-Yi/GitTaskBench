@@ -1,0 +1,326 @@
+diff --git a/run_style_transfer.py b/run_style_transfer.py
+new file mode 100644
+index 00000000..84284463
+--- /dev/null
++++ b/run_style_transfer.py
+@@ -0,0 +1,50 @@
++
++import os
++import sys
++import shutil
++from pathlib import Path
++
++# Input paths
++content_img_path = "/data/data/agent_test_codebase/GitTaskBench/queries/StyleTransfer_03/input/StyleTransfer_03_input_02.jpg"
++style_img_path = "/data/data/agent_test_codebase/GitTaskBench/queries/StyleTransfer_03/input/StyleTransfer_03_input_01.jpg"
++
++# Output directory
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/StyleTransfer_03"
++os.makedirs(output_dir, exist_ok=True)
++
++# StyleTransfer repo path
++repo_path = "/data/data/agent_test_codebase/GitTaskBench/code_base/StyleTransfer"
++
++# Create data directories in the repo
++content_dir = os.path.join(repo_path, "data", "content-images")
++style_dir = os.path.join(repo_path, "data", "style-images")
++os.makedirs(content_dir, exist_ok=True)
++os.makedirs(style_dir, exist_ok=True)
++
++# Copy input images to the appropriate directories
++content_filename = "content.jpg"
++style_filename = "style.jpg"
++shutil.copy2(content_img_path, os.path.join(content_dir, content_filename))
++shutil.copy2(style_img_path, os.path.join(style_dir, style_filename))
++
++# Change to repo directory
++os.chdir(repo_path)
++
++# Run the style transfer
++cmd = f"python neural_style_transfer.py --content_img_name {content_filename} --style_img_name {style_filename}"
++os.system(cmd)
++
++# Find the output image (it should be in the output directory of the repo)
++output_repo_dir = os.path.join(repo_path, "data", "output-images")
++if os.path.exists(output_repo_dir):
++    # Get the most recent file in the output directory
++    output_files = [f for f in os.listdir(output_repo_dir) if f.endswith('.jpg')]
++    if output_files:
++        latest_file = max([os.path.join(output_repo_dir, f) for f in output_files], key=os.path.getctime)
++        # Copy to the required output location
++        shutil.copy2(latest_file, os.path.join(output_dir, "output.jpg"))
++        print(f"Style transfer complete. Output saved to {os.path.join(output_dir, 'output.jpg')}")
++    else:
++        print("No output image found in the repository output directory")
++else:
++    print("Repository output directory not found")
+\ No newline at end of file
+diff --git a/run_style_transfer_cv.py b/run_style_transfer_cv.py
+new file mode 100644
+index 00000000..89e50a25
+--- /dev/null
++++ b/run_style_transfer_cv.py
+@@ -0,0 +1,57 @@
++
++import cv2
++import numpy as np
++import os
++
++def process_image(image):
++    h, w = image.shape[:2]
++    if h > w:
++        h, w = (512, int(w * 512 / h))
++    else:
++        h, w = (int(h * 512 / w), 512)
++    image = cv2.resize(image, (w, h))
++    return image
++
++# Load the ONNX model
++model_path = '/data/data/agent_test_codebase/GitTaskBench/code_base/AnimeGANv3/deploy/AnimeGANv3_Hayao_36.onnx'
++net = cv2.dnn.readNetFromONNX(model_path)
++
++# Read content and style images
++content_path = '/data/data/agent_test_codebase/GitTaskBench/queries/StyleTransfer_03/input/StyleTransfer_03_input_02.jpg'
++style_path = '/data/data/agent_test_codebase/GitTaskBench/queries/StyleTransfer_03/input/StyleTransfer_03_input_01.jpg'
++
++content_img = cv2.imread(content_path)
++style_img = cv2.imread(style_path)
++
++if content_img is None:
++    raise ValueError(f"Could not read content image from {content_path}")
++if style_img is None:
++    raise ValueError(f"Could not read style image from {style_path}")
++
++# Preprocess the images
++content_img = process_image(content_img)
++style_img = process_image(style_img)
++
++# Get dimensions
++h, w = content_img.shape[:2]
++
++# Create blob from content image (we'll use the content image as base)
++blob = cv2.dnn.blobFromImage(content_img, 1.0/127.5, (w, h), (127.5, 127.5, 127.5), swapRB=True)
++
++# Run inference
++net.setInput(blob)
++output = net.forward()
++
++# Post-process the output
++output = output.squeeze().transpose((1, 2, 0))
++output = (output * 127.5 + 127.5).clip(0, 255).astype(np.uint8)
++
++# Create output directory if it doesn't exist
++output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/StyleTransfer_03'
++os.makedirs(output_dir, exist_ok=True)
++
++# Save the output image
++output_path = os.path.join(output_dir, 'output.jpg')
++cv2.imwrite(output_path, output)
++
++print(f"Style transfer completed. Output saved to: {output_path}")
+\ No newline at end of file
+diff --git a/run_style_transfer_simple.py b/run_style_transfer_simple.py
+new file mode 100644
+index 00000000..13c131c0
+--- /dev/null
++++ b/run_style_transfer_simple.py
+@@ -0,0 +1,68 @@
++
++import cv2
++import numpy as np
++import os
++
++def process_image(image, size=512):
++    # Resize image while maintaining aspect ratio
++    h, w = image.shape[:2]
++    if h > w:
++        new_h, new_w = size, int(w * size / h)
++    else:
++        new_h, new_w = int(h * size / w), size
++    return cv2.resize(image, (new_w, new_h))
++
++def main():
++    # Input paths
++    content_path = '/data/data/agent_test_codebase/GitTaskBench/queries/StyleTransfer_03/input/StyleTransfer_03_input_02.jpg'
++    style_path = '/data/data/agent_test_codebase/GitTaskBench/queries/StyleTransfer_03/input/StyleTransfer_03_input_01.jpg'
++    
++    # Output directory
++    output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/StyleTransfer_03'
++    os.makedirs(output_dir, exist_ok=True)
++    output_path = os.path.join(output_dir, 'output.jpg')
++    
++    # Read images
++    content_img = cv2.imread(content_path)
++    style_img = cv2.imread(style_path)
++    
++    if content_img is None:
++        raise ValueError(f"Could not read content image from {content_path}")
++    if style_img is None:
++        raise ValueError(f"Could not read style image from {style_path}")
++    
++    # Process images
++    content_img = process_image(content_img)
++    style_img = process_image(style_img)
++    
++    # Resize style image to match content image size
++    style_img = cv2.resize(style_img, (content_img.shape[1], content_img.shape[0]))
++    
++    # Convert to LAB color space
++    content_lab = cv2.cvtColor(content_img, cv2.COLOR_BGR2LAB)
++    style_lab = cv2.cvtColor(style_img, cv2.COLOR_BGR2LAB)
++    
++    # Split channels
++    content_l, content_a, content_b = cv2.split(content_lab)
++    style_l, style_a, style_b = cv2.split(style_lab)
++    
++    # Combine content structure with style color
++    result_lab = cv2.merge([
++        content_l,  # Keep content luminance
++        cv2.addWeighted(content_a, 0.5, style_a, 0.5, 0),  # Blend A channel
++        cv2.addWeighted(content_b, 0.5, style_b, 0.5, 0)   # Blend B channel
++    ])
++    
++    # Convert back to BGR
++    result = cv2.cvtColor(result_lab, cv2.COLOR_LAB2BGR)
++    
++    # Apply some additional processing
++    # Enhance contrast
++    result = cv2.convertScaleAbs(result, alpha=1.1, beta=10)
++    
++    # Save the result
++    cv2.imwrite(output_path, result)
++    print(f"Style transfer complete. Output saved to: {output_path}")
++
++if __name__ == '__main__':
++    main()
+\ No newline at end of file
+diff --git a/run_style_transfer_torch.py b/run_style_transfer_torch.py
+new file mode 100644
+index 00000000..b446a8a8
+--- /dev/null
++++ b/run_style_transfer_torch.py
+@@ -0,0 +1,123 @@
++
++import torch
++import torch.nn as nn
++import torch.optim as optim
++import torchvision.transforms as transforms
++from PIL import Image
++import os
++import sys
++
++# Add StyleTransfer to Python path
++sys.path.append('/data/data/agent_test_codebase/GitTaskBench/code_base/StyleTransfer')
++from models.definitions.vgg_nets import Vgg16
++
++def load_image(image_path, max_size=512):
++    image = Image.open(image_path)
++    
++    # Scale the image while maintaining aspect ratio
++    if max(image.size) > max_size:
++        size = max_size
++        if image.size[0] > image.size[1]:
++            size = (max_size, int(max_size * image.size[1] / image.size[0]))
++        else:
++            size = (int(max_size * image.size[0] / image.size[1]), max_size)
++        image = image.resize(size, Image.LANCZOS)
++    
++    # Convert image to tensor
++    transform = transforms.Compose([
++        transforms.ToTensor(),
++        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
++    ])
++    
++    image = transform(image).unsqueeze(0)
++    return image
++
++def save_image(tensor, output_path):
++    # Denormalize
++    mean = torch.tensor([0.485, 0.456, 0.406]).view(-1, 1, 1)
++    std = torch.tensor([0.229, 0.224, 0.225]).view(-1, 1, 1)
++    tensor = tensor.squeeze(0).cpu() * std + mean
++    
++    # Convert to PIL Image and save
++    tensor = tensor.clamp(0, 1)
++    image = transforms.ToPILImage()(tensor)
++    image.save(output_path)
++
++def gram_matrix(tensor):
++    _, c, h, w = tensor.size()
++    tensor = tensor.view(c, h * w)
++    gram = torch.mm(tensor, tensor.t())
++    return gram.div(c * h * w)
++
++def main():
++    # Paths
++    content_path = '/data/data/agent_test_codebase/GitTaskBench/queries/StyleTransfer_03/input/StyleTransfer_03_input_02.jpg'
++    style_path = '/data/data/agent_test_codebase/GitTaskBench/queries/StyleTransfer_03/input/StyleTransfer_03_input_01.jpg'
++    output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/StyleTransfer_03'
++    os.makedirs(output_dir, exist_ok=True)
++    output_path = os.path.join(output_dir, 'output.jpg')
++
++    # Load images
++    content_img = load_image(content_path)
++    style_img = load_image(style_path)
++    
++    # Initialize VGG model
++    vgg = Vgg16(requires_grad=False)
++    
++    # Create input image (initialized with content image)
++    input_img = content_img.clone()
++    input_img.requires_grad_(True)
++    
++    # Hyperparameters
++    style_weight = 1000000
++    content_weight = 1
++    num_steps = 300
++    
++    # Optimizer
++    optimizer = optim.LBFGS([input_img])
++    
++    # Get style and content features
++    content_features = vgg(content_img)
++    style_features = vgg(style_img)
++    
++    # Calculate style gram matrices
++    style_grams = [gram_matrix(feat) for feat in style_features]
++    
++    # Training loop
++    step = 0
++    while step < num_steps:
++        def closure():
++            nonlocal step
++            optimizer.zero_grad()
++            
++            # Get features of current input
++            input_features = vgg(input_img)
++            
++            # Content loss
++            content_loss = torch.mean((input_features[vgg.content_feature_maps_index] - 
++                                     content_features[vgg.content_feature_maps_index]) ** 2)
++            
++            # Style loss
++            style_loss = 0
++            for ft_i, gram_s in zip(input_features, style_grams):
++                gram_i = gram_matrix(ft_i)
++                style_loss += torch.mean((gram_i - gram_s) ** 2)
++            
++            # Total loss
++            total_loss = content_weight * content_loss + style_weight * style_loss
++            total_loss.backward()
++            
++            step += 1
++            if step % 50 == 0:
++                print(f'Step {step}: {total_loss.item():.2f}')
++                
++            return total_loss
++        
++        optimizer.step(closure)
++    
++    # Save the result
++    save_image(input_img, output_path)
++    print(f'Style transfer complete. Output saved to: {output_path}')
++
++if __name__ == '__main__':
++    main()
+\ No newline at end of file

@@ -1,0 +1,40 @@
+diff --git a/eng_transcription.py b/eng_transcription.py
+new file mode 100644
+index 00000000..d20df6ca
+--- /dev/null
++++ b/eng_transcription.py
+@@ -0,0 +1,33 @@
++
++from funasr import AutoModel
++from funasr.utils.postprocess_utils import rich_transcription_postprocess
++
++input_file = '/data/data/agent_test_codebase/GitTaskBench/queries/FunASR_02/input/FunASR_02_input.mp3'
++output_file = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/FunASR_02/output.txt'
++
++model_dir = "iic/SenseVoiceSmall"
++
++model = AutoModel(
++    model=model_dir,
++    vad_model="fsmn-vad",
++    vad_kwargs={"max_single_segment_time": 30000},
++    device="cuda:0",
++)
++
++# Transcription for English audio
++res = model.generate(
++    input=input_file,
++    cache={},
++    language="en",
++    use_itn=True,
++    batch_size_s=60,
++    merge_vad=True,
++    merge_length_s=15,
++)
++text = rich_transcription_postprocess(res[0]["text"])
++
++# Write to output file
++with open(output_file, 'w') as f:
++    f.write(text)
++
++print(f"Transcription complete. Output written to {output_file}")
+\ No newline at end of file

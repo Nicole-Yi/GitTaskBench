@@ -1,0 +1,98 @@
+diff --git a/extract_content.py b/extract_content.py
+new file mode 100644
+index 00000000..fc805a3c
+--- /dev/null
++++ b/extract_content.py
+@@ -0,0 +1,91 @@
++
++import os
++import subprocess
++from html.parser import HTMLParser
++
++class ContentExtractor(HTMLParser):
++    def __init__(self):
++        super().__init__()
++        self.recording = False
++        self.content = []
++        self.title = None
++        self.current_tag = None
++        self.in_main_content = False
++        
++    def handle_starttag(self, tag, attrs):
++        attrs = dict(attrs)
++        self.current_tag = tag
++        
++        # Look for the main article content
++        if tag == 'div' and 'class' in attrs and 'post-content' in attrs['class']:
++            self.in_main_content = True
++            self.recording = True
++        elif tag == 'h1' and not self.title:
++            self.recording = True
++            
++    def handle_endtag(self, tag):
++        if tag == 'div' and self.in_main_content:
++            self.in_main_content = False
++            self.recording = False
++        elif tag == 'h1':
++            self.recording = False
++        self.current_tag = None
++            
++    def handle_data(self, data):
++        if self.recording:
++            text = data.strip()
++            if text:
++                if not self.title and self.current_tag == 'h1':
++                    self.title = text
++                    self.content.append(f"Title: {text}\n")
++                elif text not in self.content and self.in_main_content:
++                    self.content.append(text)
++
++# URL to process
++url = 'https://github.blog/engineering/leader-spotlight-erin-spiceland/'
++
++# Output path
++output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Trafilatura_01/output'
++temp_path = output_path + '.tmp'
++
++try:
++    # Download the page using wget
++    subprocess.run(['curl', '-s', '-k', '-L', '--max-time', '10', '--retry', '2', '-o', temp_path, url], check=True)
++    
++    # Check if the file was downloaded and has content
++    if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
++        # Read the HTML content
++        with open(temp_path, 'r', encoding='utf-8') as f:
++            html_content = f.read()
++        
++        # Extract the main content using our custom parser
++        parser = ContentExtractor()
++        parser.feed(html_content)
++        
++        # Join the extracted content
++        extracted_text = '\n'.join(parser.content)
++        
++        if extracted_text:
++            # Write the extracted content to the output file
++            with open(output_path, 'w', encoding='utf-8') as f:
++                f.write(extracted_text)
++            print(f"Content has been successfully extracted and saved to {output_path}")
++        else:
++            print("Error: Could not extract content from HTML")
++            exit(1)
++        
++        # Remove temporary file
++        os.remove(temp_path)
++    else:
++        print("Error: Downloaded file is empty")
++        exit(1)
++except subprocess.CalledProcessError as e:
++    print(f"Error downloading content: {e}")
++    if os.path.exists(temp_path):
++        os.remove(temp_path)
++    exit(1)
++except Exception as e:
++    print(f"Error: {e}")
++    if os.path.exists(temp_path):
++        os.remove(temp_path)
++    exit(1)
+\ No newline at end of file

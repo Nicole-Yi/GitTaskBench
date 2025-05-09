@@ -1,0 +1,91 @@
+diff --git a/=4.2.0.32 b/=4.2.0.32
+new file mode 100644
+index 00000000..0f5d5a76
+--- /dev/null
++++ b/=4.2.0.32
+@@ -0,0 +1,42 @@
++Collecting torch
++  Downloading torch-2.7.0-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (29 kB)
++Collecting torchvision
++  Downloading torchvision-0.22.0-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (6.1 kB)
++Collecting fastai==1.0.60
++  Downloading fastai-1.0.60-py3-none-any.whl.metadata (14 kB)
++Collecting Pillow==9.3.0
++  Downloading Pillow-9.3.0.tar.gz (50.4 MB)
++     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.4/50.4 MB 4.2 MB/s eta 0:00:00
++  Installing build dependencies: started
++  Installing build dependencies: finished with status 'done'
++  Getting requirements to build wheel: started
++  Getting requirements to build wheel: finished with status 'done'
++  Preparing metadata (pyproject.toml): started
++  Preparing metadata (pyproject.toml): finished with status 'done'
++Collecting opencv-python
++  Downloading opencv_python-4.11.0.86-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (20 kB)
++Collecting bottleneck (from fastai==1.0.60)
++  Downloading Bottleneck-1.4.2-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.7 kB)
++Collecting fastprogress>=0.2.1 (from fastai==1.0.60)
++  Downloading fastprogress-1.0.3-py3-none-any.whl.metadata (5.6 kB)
++Collecting beautifulsoup4 (from fastai==1.0.60)
++  Downloading beautifulsoup4-4.13.4-py3-none-any.whl.metadata (3.8 kB)
++Collecting matplotlib (from fastai==1.0.60)
++  Downloading matplotlib-3.10.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
++Collecting numexpr (from fastai==1.0.60)
++  Downloading numexpr-2.10.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
++Requirement already satisfied: numpy>=1.15 in /usr/local/lib/python3.12/site-packages (from fastai==1.0.60) (2.2.5)
++Collecting nvidia-ml-py3 (from fastai==1.0.60)
++  Downloading nvidia-ml-py3-7.352.0.tar.gz (19 kB)
++  Installing build dependencies: started
++  Installing build dependencies: finished with status 'done'
++  Getting requirements to build wheel: started
++  Getting requirements to build wheel: finished with status 'done'
++  Preparing metadata (pyproject.toml): started
++  Preparing metadata (pyproject.toml): finished with status 'done'
++Requirement already satisfied: pandas in /usr/local/lib/python3.12/site-packages (from fastai==1.0.60) (2.2.3)
++Requirement already satisfied: packaging in /usr/local/lib/python3.12/site-packages (from fastai==1.0.60) (25.0)
++Requirement already satisfied: pyyaml in /usr/local/lib/python3.12/site-packages (from fastai==1.0.60) (6.0.2)
++Requirement already satisfied: requests in /usr/local/lib/python3.12/site-packages (from fastai==1.0.60) (2.32.3)
++Collecting scipy (from fastai==1.0.60)
++  Downloading scipy-1.15.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (61 kB)
+diff --git a/colorize.py b/colorize.py
+new file mode 100644
+index 00000000..90a8ec2e
+--- /dev/null
++++ b/colorize.py
+@@ -0,0 +1,36 @@
++
++import os
++import sys
++import torch
++from deoldify import device
++from deoldify.device_id import DeviceId
++from deoldify.visualize import *
++
++# Set paths
++input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/DeOldify_01/input/DeOldify_01_input.jpg'
++output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/DeOldify_01'
++model_path = '/data/data/agent_test_codebase/GitTaskBench/code_base/DeOldify/models/ColorizeStable_gen.pth'
++
++# Ensure output directory exists
++os.makedirs(output_dir, exist_ok=True)
++
++# Set device
++device.set(device=DeviceId.CPU)  # Using CPU as we might not have GPU access
++
++# Download model if it doesn't exist
++if not os.path.exists(model_path):
++    os.makedirs(os.path.dirname(model_path), exist_ok=True)
++    os.system(f'wget https://www.dropbox.com/s/axsd2g85uyixaho/ColorizeStable_gen.pth?dl=0 -O {model_path}')
++
++# Initialize colorizer
++colorizer = get_image_colorizer(artistic=False)
++
++# Process the image
++render_factor = 35  # Default render factor
++output_path = os.path.join(output_dir, 'output.jpg')
++
++# Colorize and save
++result = colorizer.get_transformed_image(input_path, render_factor=render_factor)
++result.save(output_path)
++
++print(f'Colorized image saved to: {output_path}')
+\ No newline at end of file

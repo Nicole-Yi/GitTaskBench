@@ -1,0 +1,44 @@
+diff --git a/embed_watermark.py b/embed_watermark.py
+new file mode 100644
+index 00000000..713c6a76
+--- /dev/null
++++ b/embed_watermark.py
+@@ -0,0 +1,37 @@
++
++import cv2
++from imwatermark import WatermarkEncoder
++import os
++
++# Input and output paths
++input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/InvisibleWatermark_03/input/LeInvisibleWatermark_03_input.png'
++output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/InvisibleWatermark_03'
++output_path = os.path.join(output_dir, 'output.png')
++
++# Create output directory if it doesn't exist
++os.makedirs(output_dir, exist_ok=True)
++
++# Read the input image
++bgr = cv2.imread(input_path)
++
++# Set the watermark text
++wm = 'watermark'
++
++# Create and configure the encoder
++encoder = WatermarkEncoder()
++encoder.set_watermark('bytes', wm.encode('utf-8'))
++
++# Encode the watermark into the image
++bgr_encoded = encoder.encode(bgr, 'dwtDct')
++
++# Save the watermarked image
++cv2.imwrite(output_path, bgr_encoded)
++
++print(f"Watermark embedded successfully. Output saved to: {output_path}")
++
++# Verify the watermark by decoding
++from imwatermark import WatermarkDecoder
++decoder = WatermarkDecoder('bytes', len(wm.encode('utf-8')))
++watermark = decoder.decode(bgr_encoded, 'dwtDct')
++decoded_text = watermark.decode('utf-8')
++print(f"Verification - Decoded watermark: {decoded_text}")
+\ No newline at end of file

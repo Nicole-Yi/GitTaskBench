@@ -1,0 +1,40 @@
+diff --git a/asr_script.py b/asr_script.py
+new file mode 100644
+index 00000000..a60f613d
+--- /dev/null
++++ b/asr_script.py
+@@ -0,0 +1,33 @@
++
++import sys
++sys.path.append("/data/data/agent_test_codebase/GitTaskBench/code_base/FunASR")
++
++from funasr.utils.inferencer import FunASRInferencer
++from funasr.utils.types import AudioIn
++
++# Initialize the model
++model = FunASRInferencer()
++
++# Path to the input audio file
++input_file = "/data/data/agent_test_codebase/GitTaskBench/queries/FunASR_01/input/FunASR_01_input.wav"
++
++# Generate transcription
++audio_in = AudioIn(input_file)
++res = model.infer(audio_in)
++
++# Write the result to the output file
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/FunASR_01"
++output_file = f"{output_dir}/output"
++
++# Create output directory if it doesn't exist
++import os
++os.makedirs(output_dir, exist_ok=True)
++
++# Write the transcription to the output file
++with open(output_file, "w", encoding="utf-8") as f:
++    if isinstance(res, list):
++        f.write(str(res[0]["text"]))
++    else:
++        f.write(str(res))
++
++print("Transcription completed. Output written to:", output_file)
+\ No newline at end of file

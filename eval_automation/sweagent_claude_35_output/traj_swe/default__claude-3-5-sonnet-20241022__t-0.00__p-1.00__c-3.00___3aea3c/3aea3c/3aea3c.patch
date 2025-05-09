@@ -1,0 +1,33 @@
+diff --git a/change_background.py b/change_background.py
+new file mode 100644
+index 00000000..86822b33
+--- /dev/null
++++ b/change_background.py
+@@ -0,0 +1,26 @@
++
++from PIL import Image
++import os
++import sys
++sys.path.append('/data/data/agent_test_codebase/GitTaskBench/code_base/TransparentBackground')
++from transparent_background import Remover
++
++# Input and output paths
++input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/TransparentBackground_02/input/TransparentBackground_02_input.jpg"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/TransparentBackground_02"
++output_path = os.path.join(output_dir, "output.jpg")
++
++# Create output directory if it doesn't exist
++os.makedirs(output_dir, exist_ok=True)
++
++# Initialize the remover
++remover = Remover(mode='fast', device='cpu')
++
++# Load and process image
++img = Image.open(input_path).convert('RGB')
++out = remover.process(img, type='green')  # change background to green screen
++
++# Save the result
++out.save(output_path)
++
++print(f"Image processed successfully. Output saved to: {output_path}")
+\ No newline at end of file

@@ -1,0 +1,31 @@
+diff --git a/process_image.py b/process_image.py
+new file mode 100644
+index 00000000..194e839f
+--- /dev/null
++++ b/process_image.py
+@@ -0,0 +1,24 @@
++
++import sys
++import cv2
++import numpy as np
++sys.path.append('/data/data/agent_test_codebase/GitTaskBench/code_base/TransparentBackground')
++from transparent_background import Remover
++
++# Load model
++remover = Remover()  # default setting
++
++# Read input image
++input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/TransparentBackground_03/input/TransparentBackground_03_input.jpg'
++output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/TransparentBackground_03/output.jpg'
++
++# Load and process image
++img = cv2.imread(input_path)
++img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert to RGB
++out = remover.process(img, type='blur')  # blur background
++
++# Convert back to BGR for saving with OpenCV
++out_bgr = cv2.cvtColor(np.array(out), cv2.COLOR_RGB2BGR)
++cv2.imwrite(output_path, out_bgr)
++
++print(f"Image processed successfully. Output saved to: {output_path}")
+\ No newline at end of file

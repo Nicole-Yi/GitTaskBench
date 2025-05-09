@@ -1,0 +1,48 @@
+diff --git a/extract_tables.py b/extract_tables.py
+new file mode 100644
+index 00000000..31dec8d9
+--- /dev/null
++++ b/extract_tables.py
+@@ -0,0 +1,41 @@
++
++import pdfplumber
++import pandas as pd
++import os
++
++# Input and output paths
++input_pdf = "/data/data/agent_test_codebase/GitTaskBench/queries/PDFPlumber_02/input/PDFPlumber_02_input.pdf"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/PDFPlumber_02"
++output_file = os.path.join(output_dir, "output.csv")
++
++# Create output directory if it doesn't exist
++os.makedirs(output_dir, exist_ok=True)
++
++# Initialize an empty list to store all tables
++all_tables = []
++
++# Open the PDF
++with pdfplumber.open(input_pdf) as pdf:
++    # Process only first two pages
++    for page_num in range(min(2, len(pdf.pages))):
++        page = pdf.pages[page_num]
++        # Extract tables from the page
++        tables = page.extract_tables()
++        
++        # Process each table
++        for table in tables:
++            # Convert table to DataFrame
++            df = pd.DataFrame(table)
++            # Add page number information
++            df['Page_Number'] = page_num + 1
++            all_tables.append(df)
++
++# If we found any tables
++if all_tables:
++    # Concatenate all tables
++    final_df = pd.concat(all_tables, ignore_index=True)
++    # Save to CSV
++    final_df.to_csv(output_file, index=False)
++    print(f"Tables extracted and saved to {output_file}")
++else:
++    print("No tables found in the first two pages of the PDF")
+\ No newline at end of file

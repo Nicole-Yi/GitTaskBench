@@ -1,0 +1,44 @@
+diff --git a/run_style_transfer.py b/run_style_transfer.py
+new file mode 100644
+index 00000000..0ea5f6c9
+--- /dev/null
++++ b/run_style_transfer.py
+@@ -0,0 +1,37 @@
++
++import os
++import shutil
++from neural_style_transfer import neural_style_transfer
++
++# Configuration
++config = {
++    'content_img_name': 'images.jpeg',
++    'style_img_name': 'style.jpeg',
++    'height': 400,
++    'content_weight': 1e5,
++    'style_weight': 3e4,
++    'tv_weight': 1e0,
++    'optimizer': 'lbfgs',
++    'model': 'vgg19',
++    'init_method': 'content',
++    'saving_freq': -1,
++    'content_images_dir': '/data/data/agent_test_codebase/GitTaskBench/code_base/StyleTransfer/data/content-images',
++    'style_images_dir': '/data/data/agent_test_codebase/GitTaskBench/code_base/StyleTransfer/data/style-images',
++    'output_img_dir': '/data/data/agent_test_codebase/GitTaskBench/code_base/StyleTransfer/data/output-images',
++    'img_format': (4, '.jpg')
++}
++
++# Run style transfer
++results_path = neural_style_transfer(config)
++
++# Get the last image from the results (it should be the final result)
++result_files = [f for f in os.listdir(results_path) if f.endswith('.jpg')]
++result_files.sort()  # Sort to get the last one
++last_result = os.path.join(results_path, result_files[-1])
++
++# Copy the result to the required output location
++output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/StyleTransfer_01'
++os.makedirs(output_dir, exist_ok=True)
++shutil.copy2(last_result, os.path.join(output_dir, 'output.jpg'))
++
++print(f"Style transfer completed. Result saved to {output_dir}/output.jpg")
+\ No newline at end of file

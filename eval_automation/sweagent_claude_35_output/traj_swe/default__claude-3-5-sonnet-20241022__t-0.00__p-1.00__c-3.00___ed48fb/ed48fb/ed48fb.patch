@@ -1,0 +1,66 @@
+diff --git a/process_image.py b/process_image.py
+new file mode 100644
+index 00000000..99753ba9
+--- /dev/null
++++ b/process_image.py
+@@ -0,0 +1,59 @@
++
++import os
++import sys
++import numpy as np
++from PIL import Image
++
++# Add the repository to Python path
++repo_path = '/data/data/agent_test_codebase/GitTaskBench/code_base/TransparentBackground'
++if repo_path not in sys.path:
++    sys.path.insert(0, repo_path)
++
++try:
++    from transparent_background.models.modnet import MODNet
++except ImportError as e:
++    print(f"Error importing MODNet: {e}")
++    sys.exit(1)
++
++# Input and output paths
++input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/TransparentBackground_01/input/TransparentBackground_01_input.jpg"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/TransparentBackground_01"
++output_path = output_dir + "/output.png"
++
++try:
++    # Create output directory
++    os.makedirs(output_dir, exist_ok=True)
++
++    # Load and preprocess image
++    img = Image.open(input_path)
++    if img is None:
++        raise FileNotFoundError(f"Could not load image from {input_path}")
++    
++    # Convert to RGB if needed
++    if img.mode != 'RGB':
++        img = img.convert('RGB')
++    
++    # Create model
++    model = MODNet()
++    
++    # Process image
++    matte = model.process(img)
++    
++    # Convert to RGBA
++    rgba = np.concatenate((np.array(img), np.expand_dims(matte * 255, axis=2)), axis=2)
++    rgba_img = Image.fromarray(rgba.astype('uint8'), 'RGBA')
++    
++    # Save result
++    rgba_img.save(output_path)
++    print(f"Successfully processed and saved image to: {output_path}")
++
++except Exception as e:
++    print(f"Error: {str(e)}")
++    raise
++
++except FileNotFoundError:
++    print(f"Error: Could not find input file at {input_path}")
++    raise
++except Exception as e:
++    print(f"Error occurred: {str(e)}")
++    raise
+\ No newline at end of file

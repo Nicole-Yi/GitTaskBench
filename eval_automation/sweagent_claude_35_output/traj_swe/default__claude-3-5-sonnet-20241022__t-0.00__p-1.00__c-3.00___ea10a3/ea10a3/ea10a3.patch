@@ -1,0 +1,58 @@
+diff --git a/hide_text.py b/hide_text.py
+new file mode 100644
+index 00000000..95f24682
+--- /dev/null
++++ b/hide_text.py
+@@ -0,0 +1,51 @@
++
++import os
++import binascii
++from typing import Union
++
++def str_to_bytes(text: str) -> bytes:
++    """Convert a string to bytes."""
++    return text.encode('utf-8')
++
++def hide_message(input_path: str, message: str, output_path: str) -> bool:
++    """Hide a message (string) in an image with the LSB (Least Significant Bit) technique."""
++    try:
++        with open(input_path, 'rb') as f:
++            content = bytearray(f.read())
++            
++        # Convert message to binary
++        message_bytes = str_to_bytes(message)
++        binary = bin(int(binascii.hexlify(message_bytes), 16))[2:]
++        
++        # Add padding to make sure binary string length is a multiple of 8
++        binary = binary.zfill(8 * ((len(binary) + 7) // 8))
++        
++        # Add terminator
++        binary += '0' * 8
++        
++        if len(binary) > len(content[54:]):  # Skip header (54 bytes for BMP)
++            raise ValueError("Message too large for image")
++            
++        # Modify LSB of each byte
++        for i, bit in enumerate(binary):
++            content[54 + i] = (content[54 + i] & ~1) | int(bit)
++            
++        # Write modified image
++        with open(output_path, 'wb') as f:
++            f.write(content)
++            
++        return True
++    except Exception as e:
++        print(f"Error: {str(e)}")
++        return False
++
++# Input and output paths
++input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/Stegano_03/input/Stegano_03_input.png"
++output_path = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Stegano_03/output.png"
++
++# Ensure output directory exists
++os.makedirs(os.path.dirname(output_path), exist_ok=True)
++
++# Hide the message
++if hide_message(input_path, "hidden_text", output_path):
++    print("Message has been hidden successfully in the output image.")
+\ No newline at end of file

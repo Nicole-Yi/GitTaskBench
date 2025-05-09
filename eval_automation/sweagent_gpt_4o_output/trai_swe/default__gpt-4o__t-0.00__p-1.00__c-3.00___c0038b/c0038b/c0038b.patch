@@ -1,0 +1,49 @@
+diff --git a/run_reconstruction.py b/run_reconstruction.py
+new file mode 100644
+index 00000000..28de22d9
+--- /dev/null
++++ b/run_reconstruction.py
+@@ -0,0 +1,43 @@
++
++import os
++import argparse
++import reconstruct_image_from_representation
++
++if __name__ == "__main__":
++    # Define fixed args
++    input_image_path = '/data/data/agent_test_codebase/GitTaskBench/queries/StyleTransfer_02/input/StyleTransfer_02_input.jpg'
++    output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/StyleTransfer_02'
++
++    # Argument parser setup
++    parser = argparse.ArgumentParser(description='Run image reconstruction')
++
++    parser.add_argument('--should_reconstruct_content', type=bool, default=True,
++                        help='Reconstruct the content image')
++    parser.add_argument('--should_visualize_representation', type=bool, default=False,
++                        help='Visualize representations')
++    parser.add_argument('--content_img_name', type=str, default=input_image_path,
++                        help='Path to content image')
++    parser.add_argument('--style_img_name', type=str, default=input_image_path,
++                        help='Path to style image') # Style images might not be used here
++    parser.add_argument('--height', type=int, default=-1,
++                        help='Height (-1 to keep original)')
++    parser.add_argument('--saving_freq', type=int, default=1,
++                        help='Frequency of saving output')
++    parser.add_argument('--model', type=str, choices=['vgg16', 'vgg19'], default='vgg19',
++                        help='Model to use')
++    parser.add_argument('--optimizer', type=str, choices=['lbfgs', 'adam'], default='lbfgs',
++                        help='Optimizer type')
++
++    args = parser.parse_args()
++
++    # Wrap settings into a dictionary
++    config = dict()
++    for arg in vars(args):
++        config[arg] = getattr(args, arg)
++    config['content_images_dir'] = os.path.dirname(input_image_path)
++    config['style_images_dir'] = os.path.dirname(input_image_path) # Style dir as input dir
++    config['output_img_dir'] = output_dir
++    config['img_format'] = (4, '.jpg')
++
++    # Run reconstruction
++    reconstruct_image_from_representation.reconstruct_image_from_representation(config)

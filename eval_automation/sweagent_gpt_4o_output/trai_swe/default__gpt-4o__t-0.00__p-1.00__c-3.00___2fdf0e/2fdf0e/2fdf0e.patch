@@ -1,0 +1,62 @@
+diff --git a/execute_scan_excel.py b/execute_scan_excel.py
+new file mode 100644
+index 00000000..3f844bd7
+--- /dev/null
++++ b/execute_scan_excel.py
+@@ -0,0 +1,16 @@
++import sys
++sys.path.append('/data/data/agent_test_codebase/GitTaskBench/code_base/Eparse/eparse')
++
++from cli import scan_excel
++import click
++
++@click.command()
++@click.option('--input-dir', type=str, required=True, help='Directory containing Excel files to scan.')
++@click.option('--output-file', type=str, required=True, help='Output text file to save Excel file and sheet data.')
++@click.pass_context
++def execute_scan(ctx, input_dir, output_file):
++    ctx.invoke(scan_excel, input_dir=input_dir, output_file=output_file)
++
++if __name__ == '__main__':
++    execute_scan(auto_envvar_prefix='EXEC_SCAN_EXCEL')
++
+diff --git a/run_scan_excel.py b/run_scan_excel.py
+new file mode 100644
+index 00000000..4d707bb3
+--- /dev/null
++++ b/run_scan_excel.py
+@@ -0,0 +1,24 @@
++import sys
++from os.path import dirname, abspath
++
++# Add Eparse to PYTHONPATH
++sys.path.insert(0, '/data/data/agent_test_codebase/GitTaskBench/code_base/Eparse/eparse')
++
++from eparse.cli import scan_excel
++import click
++
++# Simulate command line context and options
++@click.group()
++def cli():
++    pass
++
++@cli.command()
++@click.option('--input-dir', '-i', type=str, required=True, help='Directory containing Excel files to scan.')
++@click.option('--output-file', '-o', type=str, required=True, help='Output text file to save Excel file and sheet data.')
++@click.pass_context
++def main(ctx, input_dir, output_file):
++    ctx.invoke(scan_excel, input_dir=input_dir, output_file=output_file)
++
++if __name__ == '__main__':
++    cli(auto_envvar_prefix='SCAN_EXCEL')
++
+diff --git a/test_scan_excel.sh b/test_scan_excel.sh
+new file mode 100755
+index 00000000..043441ad
+--- /dev/null
++++ b/test_scan_excel.sh
+@@ -0,0 +1,4 @@
++#!/bin/bash
++
++python /data/data/agent_test_codebase/GitTaskBench/code_base/Eparse/eparse/cli.py scan_excel --input-dir /data/data/agent_test_codebase/GitTaskBench/queries/Eparse_01/input/Eparse_01_input -o /data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Eparse_01/output.txt
++

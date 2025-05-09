@@ -1,0 +1,37 @@
+diff --git a/hide_watermark.py b/hide_watermark.py
+new file mode 100644
+index 00000000..879537ff
+--- /dev/null
++++ b/hide_watermark.py
+@@ -0,0 +1,30 @@
++
++import sys
++import os
++from PIL import Image
++
++# Add Stegano to Python path
++stegano_path = '/data/data/agent_test_codebase/GitTaskBench/code_base/Stegano'
++sys.path.append(stegano_path)
++
++from stegano.lsb import lsb
++from stegano.tools import Hider, Revealer
++
++# Input and output paths
++input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/Stegano_01/input/Stegano_01_input.png"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Stegano_01"
++output_path = output_dir + "/output.png"
++
++# Create output directory if it doesn't exist
++import os
++os.makedirs(output_dir, exist_ok=True)
++
++# Hide the watermark in the image
++secret = lsb.hide(input_path, "<stegano>")
++secret.save(output_path)
++
++print(f"Watermark hidden successfully in {output_path}")
++
++# Verify the hidden message
++revealed_message = lsb.reveal(output_path)
++print(f"Verification - revealed message: {revealed_message}")
+\ No newline at end of file

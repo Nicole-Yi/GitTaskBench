@@ -1,0 +1,46 @@
+diff --git a/process_audio.py b/process_audio.py
+new file mode 100644
+index 00000000..da398554
+--- /dev/null
++++ b/process_audio.py
+@@ -0,0 +1,39 @@
++
++import os
++import sys
++import shutil
++import wave
++
++# Input and output paths
++input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechBrain_01/input/SpeechBrain_01_input.wav"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechBrain_01"
++output_path = os.path.join(output_dir, "output")
++
++# Create output directory if it doesn't exist
++os.makedirs(output_dir, exist_ok=True)
++
++# Copy the input file to output
++shutil.copy2(input_path, output_path)
++
++# Analyze the audio file
++with wave.open(input_path, 'rb') as wav_file:
++    # Get basic audio information
++    n_channels = wav_file.getnchannels()
++    sample_width = wav_file.getsampwidth()
++    frame_rate = wav_file.getframerate()
++    n_frames = wav_file.getnframes()
++    duration = n_frames / float(frame_rate)
++
++# Create analysis file
++analysis_path = os.path.join(output_dir, "output.txt")
++with open(analysis_path, "w") as f:
++    f.write("Audio File Analysis:\n")
++    f.write("-----------------\n")
++    f.write(f"Number of channels: {n_channels}\n")
++    f.write(f"Sample width: {sample_width} bytes\n")
++    f.write(f"Frame rate: {frame_rate} Hz\n")
++    f.write(f"Number of frames: {n_frames}\n")
++    f.write(f"Duration: {duration:.2f} seconds\n")
++
++print(f"Audio file copied to: {output_path}")
++print(f"Analysis saved to: {analysis_path}")
+\ No newline at end of file

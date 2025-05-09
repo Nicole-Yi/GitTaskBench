@@ -1,0 +1,51 @@
+diff --git a/enhance_resolution.py b/enhance_resolution.py
+new file mode 100644
+index 00000000..b9df10b0
+--- /dev/null
++++ b/enhance_resolution.py
+@@ -0,0 +1,41 @@
++
++import os
++import sys
++
++# Add the SuperResolution repository to Python path
++sys.path.append('/data/data/agent_test_codebase/GitTaskBench/code_base/SuperResolution')
++
++from ISR.models.rrdn import RRDN
++from PIL import Image
++import numpy as np
++
++def main():
++    # Input and output paths
++    input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/SuperResolution_03/input/SuperResolution_03_input.png'
++    output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SuperResolution_03'
++    output_path = os.path.join(output_dir, 'output.png')
++
++    # Create output directory if it doesn't exist
++    os.makedirs(output_dir, exist_ok=True)
++
++    # Create the RRDN model with gans weights
++    model = RRDN(weights='gans')
++
++    # Load and preprocess the input image
++    img = Image.open(input_path)
++    if img.mode != 'RGB':
++        img = img.convert('RGB')
++    
++    # Convert to numpy array
++    lr_img = np.array(img)
++
++    # Predict high-resolution image
++    sr_img = model.predict(lr_img)
++
++    # Convert back to PIL Image and save
++    sr_img_pil = Image.fromarray(sr_img.astype(np.uint8))
++    sr_img_pil.save(output_path)
++    print(f"Enhanced image saved to: {output_path}")
++
++if __name__ == '__main__':
++    main()
+\ No newline at end of file
+diff --git a/log_file b/log_file
+new file mode 100644
+index 00000000..e69de29b

@@ -1,0 +1,55 @@
+diff --git a/process_eog.py b/process_eog.py
+new file mode 100644
+index 00000000..00b3de9d
+--- /dev/null
++++ b/process_eog.py
+@@ -0,0 +1,48 @@
++
++import pandas as pd
++import neurokit2 as nk
++
++# Read the input CSV file
++input_file = "/data/data/agent_test_codebase/GitTaskBench/queries/NeuroKit_03/input/NeuroKit_03_input.csv"
++df = pd.read_csv(input_file)
++
++# Process EOG signal
++# Using PhotoSensor column as EOG data and sampling rate needs to be determined
++eog_signal = df['PhotoSensor'].values
++sampling_rate = 1000  # This is an assumption, adjust if needed
++
++# Clean and process EOG signal
++eog_cleaned = nk.eog_clean(eog_signal, sampling_rate=sampling_rate)
++eog_peaks, info = nk.eog_peaks(eog_cleaned, sampling_rate=sampling_rate)
++print("Info dictionary keys:", info.keys())
++
++# Calculate metrics
++# 1. Number of peaks
++number_of_peaks = len(info['EOG_Blinks'])
++
++# 2. Peak times in seconds
++peak_times = [peak/sampling_rate for peak in info['EOG_Blinks']]
++
++# 3. Mean respiratory rate (assuming EOG peaks correspond to blinks)
++# Calculate intervals between peaks in seconds
++peak_intervals = [peak_times[i+1] - peak_times[i] for i in range(len(peak_times)-1)]
++if peak_intervals:
++    mean_interval = sum(peak_intervals) / len(peak_intervals)
++    # Convert to BPM (blinks per minute)
++    mean_rate_bpm = 60 / mean_interval
++else:
++    mean_rate_bpm = 0
++
++# Create output DataFrame
++output_data = {
++    'Mean_Respiratory_Rate_BPM': [mean_rate_bpm],
++    'Peak_Times_Seconds': [peak_times],
++    'Number_of_Peaks': [number_of_peaks]
++}
++output_df = pd.DataFrame(output_data)
++
++# Save to CSV
++output_file = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/NeuroKit_03/output.csv"
++output_df.to_csv(output_file, index=False)
++
++print(f"Processing complete. Output saved to {output_file}")
+\ No newline at end of file

@@ -1,0 +1,50 @@
+diff --git a/perform_diarization.py b/perform_diarization.py
+new file mode 100644
+index 00000000..7aa7f549
+--- /dev/null
++++ b/perform_diarization.py
+@@ -0,0 +1,43 @@
++
++import os
++from pydub import AudioSegment
++
++# Define directories
++input_file = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechBrain_02/input/SpeechBrain_02_input.mp3"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechBrain_02"
++
++def split_audio(file_path, segment_length_ms, dest_dir):
++    if not os.path.exists(dest_dir):
++        os.makedirs(dest_dir)
++    
++    audio = AudioSegment.from_mp3(file_path)
++    length_in_ms = len(audio)
++    
++    for i in range(0, length_in_ms, segment_length_ms):
++        segment = audio[i:i+segment_length_ms]
++        segment_filename = os.path.join(dest_dir, f"output_segment_{i//segment_length_ms}.mp3")
++        segment.export(segment_filename, format="mp3")
++        print(f"Exported {segment_filename}")
++
++# Split the audio into 10 second segments (10000 milliseconds)
++split_audio(input_file, 10000, output_dir)
++print("Audio segmentation completed")("/data/data/agent_test_codebase/GitTaskBench/code_base/SpeechBrain")
++import json
++from speechbrain.inference.diarization import Speech_Emotion_Diarization
++
++# Directories
++input_file = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechBrain_02/input/SpeechBrain_02_input.mp3"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechBrain_02"
++
++# Initialize diarization model using pretrained models
++model = Speech_Emotion_Diarization.from_hparams(source="speechbrain/emotion-diarization-wavlm-large", savedir=output_dir)
++
++# Perform diarization
++emotions_durations = model.diarize_file(input_file)
++
++# Save the output
++output_path = os.path.join(output_dir, "output.json")
++with open(output_path, "w") as outfile:
++    json.dump(emotions_durations, outfile)
++
++print(f"Diarization completed and saved to {output_path}")
+\ No newline at end of file

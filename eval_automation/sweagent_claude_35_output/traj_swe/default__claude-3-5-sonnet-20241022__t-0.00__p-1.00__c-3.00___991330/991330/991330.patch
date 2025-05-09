@@ -1,0 +1,132 @@
+diff --git a/parse_excel.py b/parse_excel.py
+new file mode 100644
+index 00000000..9d978adc
+--- /dev/null
++++ b/parse_excel.py
+@@ -0,0 +1,125 @@
++
++import os
++import sys
++import json
++from pathlib import Path
++import zipfile
++import xml.etree.ElementTree as ET
++from datetime import datetime, timedelta
++
++# Input and output paths
++input_file = '/data/data/agent_test_codebase/GitTaskBench/queries/Eparse_02/input/Eparse_02_input.xlsx'
++output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Eparse_02'
++output_file = os.path.join(output_dir, 'output.txt')
++
++# Create output directory if it doesn't exist
++os.makedirs(output_dir, exist_ok=True)
++
++def excel_date_to_str(excel_date):
++    """Convert Excel date number to string date."""
++    try:
++        # Excel's date system starts from December 30, 1899
++        excel_epoch = datetime(1899, 12, 30)
++        # Convert Excel date (which is a number of days since epoch) to datetime
++        dt = excel_epoch + timedelta(days=float(excel_date))
++        return dt.strftime('%Y-%m-%d')
++    except (ValueError, TypeError):
++        return excel_date  # Return original value if conversion fails
++
++def read_xlsx_content(xlsx_path):
++    """Read Excel file content directly from the XML structure"""
++    result = {}
++    
++    try:
++        # Open Excel file as a zip file
++        with zipfile.ZipFile(xlsx_path) as zf:
++            # Read shared strings if available
++            shared_strings = []
++            if 'xl/sharedStrings.xml' in zf.namelist():
++                with zf.open('xl/sharedStrings.xml') as f:
++                    xml = ET.parse(f)
++                    for si in xml.findall('.//{*}si'):
++                        t = si.find('.//{*}t')
++                        if t is not None:
++                            shared_strings.append(t.text or '')
++            
++            # Read sheets data
++            with zf.open('xl/workbook.xml') as f:
++                wb = ET.parse(f)
++                sheets = wb.findall('.//{*}sheet')
++                
++                for sheet in sheets:
++                    sheet_name = sheet.get('name')
++                    sheet_id = sheet.get('sheetId')
++                    sheet_data = []
++                    
++                    # Read sheet content
++                    with zf.open(f'xl/worksheets/sheet{sheet_id}.xml') as sf:
++                        sheet_xml = ET.parse(sf)
++                        rows = sheet_xml.findall('.//{*}row')
++                        
++                        if rows:
++                            # Get headers from first row
++                            header_cells = rows[0].findall('.//{*}c')
++                            headers = []
++                            for cell in header_cells:
++                                v = cell.find('.//{*}v')
++                                if v is not None:
++                                    value = v.text or ''
++                                    # If it's a shared string
++                                    if cell.get('t') == 's':
++                                        value = shared_strings[int(value)]
++                                    headers.append(value)
++                            
++                            # Process data rows
++                            for row in rows[1:]:
++                                cells = row.findall('.//{*}c')
++                                row_data = {}
++                                for i, cell in enumerate(cells):
++                                    if i < len(headers):
++                                        v = cell.find('.//{*}v')
++                                        if v is not None:
++                                            value = v.text or ''
++                                            # If it's a shared string
++                                            if cell.get('t') == 's':
++                                                value = shared_strings[int(value)]
++                                            # Convert dates if the header is '日期'
++                                            if headers[i] == '日期':
++                                                value = excel_date_to_str(value)
++                                            row_data[headers[i]] = value
++                                        else:
++                                            row_data[headers[i]] = ''
++                                if row_data:
++                                    sheet_data.append(row_data)
++                    
++                    result[sheet_name] = sheet_data
++    except Exception as e:
++        print(f"Error reading Excel file: {e}")
++        return None
++    
++    return result
++
++try:
++    # Read Excel file content
++    excel_data = read_xlsx_content(input_file)
++    
++    if excel_data:
++        # Write to output file
++        with open(output_file, 'w', encoding='utf-8') as f:
++            for sheet_name, rows in excel_data.items():
++                f.write(f"Sheet: {sheet_name}\n")
++                f.write("-" * 50 + "\n")
++                
++                for row in rows:
++                    f.write(json.dumps(row, ensure_ascii=False) + "\n")
++                
++                f.write("\n")  # Add blank line between sheets
++        
++        print(f"Excel file has been parsed and saved to {output_file}")
++    else:
++        print("Failed to read Excel file")
++        sys.exit(1)
++
++except Exception as e:
++    print(f"Error processing file: {e}")
++    sys.exit(1)
+\ No newline at end of file

@@ -1,0 +1,61 @@
+diff --git a/solve.py b/solve.py
+new file mode 100644
+index 00000000..2aec808a
+--- /dev/null
++++ b/solve.py
+@@ -0,0 +1,54 @@
++
++import os
++import sys
++import shutil
++
++# Add the StyleTransfer repository to the Python path
++repo_path = "/data/data/agent_test_codebase/GitTaskBench/code_base/StyleTransfer"
++sys.path.append(repo_path)
++
++from reconstruct_image_from_representation import reconstruct_image_from_representation
++
++def main():
++    # Input and output paths
++    input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/StyleTransfer_02/input/StyleTransfer_02_input.jpg"
++    output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/StyleTransfer_02"
++    
++    # Create output directory if it doesn't exist
++    os.makedirs(output_dir, exist_ok=True)
++    
++    # Copy input image to content-images directory in the repo
++    content_images_dir = os.path.join(repo_path, "data", "content-images")
++    os.makedirs(content_images_dir, exist_ok=True)
++    input_filename = "input.jpg"
++    shutil.copy(input_path, os.path.join(content_images_dir, input_filename))
++    
++    # Set up reconstruction parameters
++    args = {
++        "should_reconstruct_content": True,
++        "should_visualize_representation": False,
++        "content_img_name": input_filename,
++        "height": 500,
++        "optimizer": "lbfgs",
++        "model": "vgg19",
++        "init_method": "content",
++    }
++    
++    # Run reconstruction
++    output_path = reconstruct_image_from_representation(args)
++    
++    # Find the last generated image (highest numbered one)
++    output_files = [f for f in os.listdir(output_path) if f.endswith('.jpg') and f[:-4].isdigit()]
++    if not output_files:
++        raise Exception("No output image was generated")
++    
++    last_output = max(output_files)
++    
++    # Copy the result to the required output location
++    shutil.copy(
++        os.path.join(output_path, last_output),
++        os.path.join(output_dir, "output.jpg")
++    )
++
++if __name__ == "__main__":
++    main()
+\ No newline at end of file

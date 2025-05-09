@@ -1,0 +1,39 @@
+diff --git a/split_pdf.py b/split_pdf.py
+new file mode 100644
+index 00000000..97c2052e
+--- /dev/null
++++ b/split_pdf.py
+@@ -0,0 +1,32 @@
++
++import os
++from pypdf import PdfReader, PdfWriter
++
++# Input and output paths
++input_pdf_path = "/data/data/agent_test_codebase/GitTaskBench/queries/PyPDF2_02/input/PyPDF2_02_input.pdf"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/PyPDF2_02"
++
++# Create output directory if it doesn't exist
++os.makedirs(output_dir, exist_ok=True)
++
++# Read the input PDF
++reader = PdfReader(input_pdf_path)
++total_pages = len(reader.pages)
++
++# Split each page into a separate PDF
++for page_num in range(total_pages):
++    # Create a PDF writer object
++    writer = PdfWriter()
++    
++    # Add the current page
++    writer.add_page(reader.pages[page_num])
++    
++    # Generate output filename
++    output_filename = f"output_{str(page_num + 1).zfill(2)}.pdf"
++    output_path = os.path.join(output_dir, output_filename)
++    
++    # Write the page to a new PDF file
++    with open(output_path, "wb") as output_file:
++        writer.write(output_file)
++
++print(f"Successfully split PDF into {total_pages} separate files in {output_dir}")
+\ No newline at end of file

@@ -1,0 +1,75 @@
+diff --git a/eval_automation/output/Scrapy_02/output.csv b/eval_automation/output/Scrapy_02/output.csv
+new file mode 100644
+index 00000000..d4fec6aa
+--- /dev/null
++++ b/eval_automation/output/Scrapy_02/output.csv
+@@ -0,0 +1,13 @@
++author,text
++Jane Austen,"“The person, be it gentleman or lady, who has not pleasure in a good novel, must be intolerably stupid.”"
++Steve Martin,"“A day without sunshine is like, you know, night.”"
++Garrison Keillor,“Anyone who thinks sitting in church can make you a Christian must also think that sitting in a garage can make you a car.”
++Jim Henson,“Beauty is in the eye of the beholder and it may be necessary from time to time to give a stupid or misinformed beholder a black eye.”
++Charles M. Schulz,“All you need is love. But a little chocolate now and then doesn&#39;t hurt.”
++Suzanne Collins,"“Remember, we&#39;re madly in love, so it&#39;s all right to kiss me anytime you feel like it.”"
++Charles Bukowski,“Some people never go crazy. What truly horrible lives they must lead.”
++Terry Pratchett,"“The trouble with having an open mind, of course, is that people will insist on coming along and trying to put things in it.”"
++Dr. Seuss,"“Think left and think right and think low and think high. Oh, the thinks you can think up if only you try!”"
++George Carlin,“The reason I talk to myself is because I’m the only one whose answers I accept.”
++W.C. Fields,“I am free of all prejudice. I hate everyone equally. ”
++Jane Austen,"“A lady&#39;s imagination is very rapid; it jumps from admiration to love, from love to matrimony in a moment.”"
+diff --git a/eval_automation/output/Scrapy_02/quotes_spider.py b/eval_automation/output/Scrapy_02/quotes_spider.py
+new file mode 100644
+index 00000000..ce4ecec5
+--- /dev/null
++++ b/eval_automation/output/Scrapy_02/quotes_spider.py
+@@ -0,0 +1,49 @@
++
++import requests
++import csv
++import os
++import re
++
++def scrape_quotes(url):
++    quotes = []
++    while url:
++        print(f"Fetching {url}")
++        response = requests.get(url)
++        print(f"Status code: {response.status_code}")
++        content = response.text
++        print(f"Content length: {len(content)}")
++        
++        # Find all quotes using regex
++        quote_pattern = r'<span class="text" itemprop="text">(.*?)</span>.*?<small class="author" itemprop="author">(.*?)</small>'
++        matches = re.findall(quote_pattern, content, re.DOTALL)
++        
++        for text, author in matches:
++            # Clean up the text (remove quotes)
++            text = text.strip().strip('"').strip('"')
++            quotes.append({"author": author.strip(), "text": text.strip()})
++        
++        # Find next page link
++        next_match = re.search(r'<li class="next">.*?href="([^"]+)"', content, re.DOTALL)
++        url = "https://quotes.toscrape.com" + next_match.group(1) if next_match else None
++    
++    return quotes
++
++def save_to_csv(quotes, output_file):
++    with open(output_file, 'w', newline='', encoding='utf-8') as f:
++        writer = csv.DictWriter(f, fieldnames=['author', 'text'])
++        writer.writeheader()
++        writer.writerows(quotes)
++
++def main():
++    url = "https://quotes.toscrape.com/tag/humor/"
++    output_file = '/GitTaskBench/eval_automation/output/Scrapy_02/output.csv'
++    
++    # Ensure output directory exists
++    os.makedirs(os.path.dirname(output_file), exist_ok=True)
++    
++    quotes = scrape_quotes(url)
++    save_to_csv(quotes, output_file)
++    print(f"Scraped {len(quotes)} quotes and saved to {output_file}")
++
++if __name__ == "__main__":
++    main()
+\ No newline at end of file
