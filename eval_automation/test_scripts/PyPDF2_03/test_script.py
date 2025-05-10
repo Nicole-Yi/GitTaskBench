@@ -42,14 +42,14 @@ def evaluate(pred_file, truth_file, result_file):
         pred_value = str(pred_metadata.get(key, ""))
         recall = compute_recall(pred_value, truth_value)
 
-        if recall >= 0.5:
+        if recall >= 0.8:
             passed_fields += 1
-            comments.append(f"✅ 字段 {key} 召回率: {recall:.2f} >= 0.5")
+            comments.append(f"✅ 字段 {key} 召回率: {recall:.2f} >= 0.8")
         else:
-            comments.append(f"❌ 字段 {key} 召回率: {recall:.2f} < 0.5，预测: {pred_value}，应为: {truth_value}")
+            comments.append(f"❌ 字段 {key} 召回率: {recall:.2f} < 0.8，预测: {pred_value}，应为: {truth_value}")
 
     pass_ratio = passed_fields / total_fields if total_fields else 0
-    overall_pass = pass_ratio >= 0.5
+    overall_pass = pass_ratio >= 0.8
     comments.append(f"📊 字段通过率: {pass_ratio:.2f} ({passed_fields}/{total_fields})")
     comments.append("✅ 测试通过！" if overall_pass else "❌ 测试未通过")
 

@@ -25,7 +25,7 @@ INPUT_IMAGE="${GT_DIR}/${REPO_NAME}/gt.jpg"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        exit 1
+        # exit 1  # 删除了 exit 以继续执行
     fi
 }
 
@@ -39,7 +39,7 @@ mkdir -p "${GT_DIR}/${REPO_NAME}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        exit 1
+        # exit 1  # 删除了 exit 以继续执行
     fi
 }
 
@@ -72,9 +72,9 @@ if [[ -n "$file" ]]; then
         echo "[成功] 输出文件: ${OUTPUT_SUB_DIR}/output.png"
     else
         echo "[失败] 请检查以上错误信息！"
-        exit 1
+        # exit 1  # 删除了 exit 以继续执行
     fi
 else
     echo "[错误] 文件不存在: ${OUTPUT_SUB_DIR}/output.*"
-    exit 1
+    # exit 1  # 删除了 exit 以继续执行
 fi

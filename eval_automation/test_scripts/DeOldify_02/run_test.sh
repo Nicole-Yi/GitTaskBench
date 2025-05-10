@@ -1,4 +1,5 @@
 #!/bin/bash
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 EVAL_AUTOMATION_DIR="$(dirname "$SCRIPT_DIR")"
 WORKSPACE_DIR="$(dirname "$EVAL_AUTOMATION_DIR")"
@@ -21,7 +22,7 @@ RESULT_DIR="${DEFAULT_EVALING_DIR}/test_results"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        exit 1
+        # exit 1  # 删除了 exit 以继续执行
     fi
 }
 
@@ -30,14 +31,6 @@ mkdir -p "${OUTPUT_DIR}/${REPO_NAME}"
 mkdir -p "${RESULT_DIR}/${REPO_NAME}"
 mkdir -p "${SCRIPT_DIR}/${REPO_NAME}"
 mkdir -p "${GT_DIR}/${REPO_NAME}"
-
-# --- 检查关键文件是否存在 ---
-check_file_exists() {
-    if [ ! -f "$1" ]; then
-        echo "[错误] 文件不存在: $1"
-        exit 1
-    fi
-}
 
 # 验证测试脚本和输入文件
 OUTPUT_SUB_DIR="${OUTPUT_DIR}/${REPO_NAME}"
@@ -65,6 +58,7 @@ if [[ -n "$file" ]]; then
         --result "${RESULT_JSON}"
 else
     echo "No matching file found"
+    # exit 1  # 删除了 exit 以继续执行
 fi
 
 # --- 检查是否生成结果文件 ---
@@ -72,4 +66,5 @@ if [ -s "${RESULT_JSON}" ]; then
     echo "[成功] 已生成结果文件: ${RESULT_JSON}"
 else
     echo "[警告] 未生成结果文件或为空，请检查处理过程是否失败！"
+    # exit 1  # 删除了 exit 以继续执行
 fi

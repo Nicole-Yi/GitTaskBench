@@ -36,7 +36,7 @@ mkdir -p "${RESULT_DIR}/${REPO_NAME}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        exit 1
+        return 1
     fi
 }
 
@@ -90,5 +90,4 @@ if [ $? -eq 0 ]; then
     echo "[成功] 输出文件: ${RESULT_JSON}"
 else
     echo "[失败] 请检查以上错误信息！"
-    exit 1
 fi

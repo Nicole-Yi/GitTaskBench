@@ -24,12 +24,11 @@ mkdir -p "${OUTPUT_DIR}/${REPO_NAME}"
 mkdir -p "${SCRIPT_DIR}/${REPO_NAME}"
 mkdir -p "${RESULT_DIR}/${REPO_NAME}"
 
-
 # --- 检查关键文件是否存在 ---
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        exit 1
+        # exit 1  # 删除了 exit 以继续执行
     fi
 }
 
@@ -54,6 +53,7 @@ if [[ -n "$file" ]]; then
         --result "${RESULT_JSON}"
 else
     echo "No matching file found"
+    # exit 1  # 删除了 exit 以继续执行
 fi
 
 
@@ -62,5 +62,5 @@ if [ $? -eq 0 ]; then
     echo "[成功] 输出文件: ${RESULT_JSON}"
 else
     echo "[失败] 请检查以上错误信息！"
-    exit 1
+    # exit 1  # 删除了 exit 以继续执行
 fi

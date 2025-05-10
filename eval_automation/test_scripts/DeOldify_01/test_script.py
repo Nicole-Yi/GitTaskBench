@@ -89,21 +89,17 @@ def main():
             if ok_ciede and ok_niqe:
                 comments.append("✅ 处理效果符合要求：CIEDE2000↑ 且 NIQE↓ 均满足阈值")
                 result_ok = True
-                exit_code = 0
             else:
                 fail_reasons = []
                 if not ok_ciede: fail_reasons.append("CIEDE2000 未达标")
                 if not ok_niqe:  fail_reasons.append("NIQE 未达标")
                 comments.append("❌ 处理效果不符合要求：" + " ".join(fail_reasons))
                 result_ok = False
-                exit_code = 2
         except Exception as e:
             comments.append(f"指标计算时发生异常：{e}")
             result_ok = False
-            exit_code = 2
     else:
         result_ok = False
-        exit_code = 1
 
     # 如果指定了 --result，就写入 JSONL
     if args.result:
@@ -115,10 +111,9 @@ def main():
         }
         write_result_jsonl(args.result, record)
 
-    # 打印所有 comments 并退出
+    # 打印所有 comments
     for line in comments:
         print(line, file=(sys.stderr if not process_ok or not result_ok else sys.stdout))
-    sys.exit(exit_code)
 
 if __name__ == "__main__":
     main()

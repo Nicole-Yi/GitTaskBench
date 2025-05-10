@@ -64,6 +64,5 @@ if [ $? -eq 0 ]; then
     echo "[成功] 评估结果: ${RESULT_JSON}"
 else
     echo "[失败] evaluate_rsp_metrics.py 执行失败，请检查错误信息！"
-    exit 1
 fi
 

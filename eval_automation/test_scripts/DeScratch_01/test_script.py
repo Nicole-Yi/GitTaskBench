@@ -5,6 +5,7 @@ import json
 import datetime
 import numpy as np
 from PIL import Image, UnidentifiedImageError
+
 def main():
     parser = argparse.ArgumentParser(description='自动化划痕检测测试脚本')
     parser.add_argument(
@@ -83,7 +84,6 @@ def main():
     # 追加模式写入，每条一行
     with open(args.result, 'a', encoding='utf-8') as f:
         f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
-    # 退出码：  # 改成总是 0
-    exit(0)
+
 if __name__ == "__main__":
     main()

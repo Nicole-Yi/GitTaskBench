@@ -28,14 +28,14 @@ mkdir -p "${RESULT_DIR}/${REPO_NAME}"
 check_dir_exists() {
     if [ ! -d "$1" ]; then  # 检查目录是否存在
         echo "[错误] 目录不存在: $1"
-        exit 1
+        return 1
     fi
 }
 
 check_file_exists() {
     if [ ! -f "$1" ]; then  # 检查文件是否存在
         echo "[错误] 文件不存在: $1"
-        exit 1
+        return 1
     fi
 }
 
@@ -69,5 +69,4 @@ if [ $? -eq 0 ]; then
     echo "[成功] 输出文件: ${RESULT_JSON}"
 else
     echo "[失败] 请检查以上错误信息！"
-    exit 1
 fi

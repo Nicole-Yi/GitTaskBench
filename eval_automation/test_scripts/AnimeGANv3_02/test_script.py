@@ -95,7 +95,7 @@ def main():
         f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
 
     # — 4. 退出码 —
-    sys.exit(0)
+    # sys.exit(0)  # 已删除 exit
 
 if __name__ == "__main__":
     main()

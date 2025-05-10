@@ -4,12 +4,8 @@ import json
 from datetime import datetime
 from io import StringIO
 import sys
-import difflib  # 用于计算相似度
 
-def compute_similarity(text1, text2):
-    return difflib.SequenceMatcher(None, text1, text2).ratio()
-
-def test_watermark_extraction(extracted_txt_path, ground_truth_path, similarity_threshold=0.9):
+def test_watermark_extraction(extracted_txt_path, ground_truth_path):
     comments = []
     process_success = True
     result_success = False
@@ -32,19 +28,13 @@ def test_watermark_extraction(extracted_txt_path, ground_truth_path, similarity_
         with open(ground_truth_path, 'r', encoding='utf-8') as f:
             ground_truth = f.read().strip()
 
-        similarity = compute_similarity(extracted_watermark, ground_truth)
-        similarity_percent = round(similarity * 100, 2)
-
-        if similarity == 1.0:
+        if extracted_watermark == ground_truth:
             result_success = True
             comments.append("✅ 水印提取成功，完全匹配！")
-        elif similarity >= similarity_threshold:
-            result_success = True
-            comments.append(f"⚠️ 水印基本匹配，相似度 {similarity_percent}%（阈值：{int(similarity_threshold * 100)}%）")
         else:
-            comments.append(f"❌ 水印提取失败，相似度 {similarity_percent}% 低于阈值（{int(similarity_threshold * 100)}%）")
-            comments.append(f"解码水印: {extracted_watermark}")
-            comments.append(f"Ground truth: {ground_truth}")
+            comments.append("❌ 水印提取失败，结果与 Ground Truth 不一致")
+            comments.append(f"提取水印: {extracted_watermark}")
+            comments.append(f"Ground Truth: {ground_truth}")
 
     except Exception as e:
         process_success = False
@@ -69,11 +59,10 @@ def save_result_jsonl(result_path, process_flag, result_flag, comments_text):
         print(f"[❌] 写入 JSONL 失败: {e}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="评估水印提取的准确性")
+    parser = argparse.ArgumentParser(description="评估水印提取的准确性（严格匹配）")
     parser.add_argument("--extracted_txt", required=True, help="提取的水印文本文件路径")
     parser.add_argument("--ground_truth_txt", required=True, help="ground truth 文本文件路径")
     parser.add_argument("--result", required=False, help="JSONL 输出路径")
-    parser.add_argument("--threshold", type=float, default=0.9, help="匹配相似度阈值（默认 0.9）")
     args = parser.parse_args()
 
     original_stdout = sys.stdout
@@ -81,7 +70,7 @@ if __name__ == "__main__":
     sys.stdout = buffer
 
     process_flag, result_flag, comments_text = test_watermark_extraction(
-        args.extracted_txt, args.ground_truth_txt, similarity_threshold=args.threshold
+        args.extracted_txt, args.ground_truth_txt
     )
 
     sys.stdout = original_stdout
