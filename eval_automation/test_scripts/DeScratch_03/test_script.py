@@ -6,11 +6,23 @@ import json
 from datetime import datetime
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
+import glob
+
+def find_single_image(directory, pattern):
+    """在指定目录中根据通配符匹配单个图像文件。"""
+    files = glob.glob(os.path.join(directory, pattern))
+    if len(files) == 1:
+        return files[0]
+    elif len(files) == 0:
+        print(f"⚠️ 在 {directory} 中未找到匹配 {pattern} 的图像文件")
+    else:
+        print(f"⚠️ 在 {directory} 中找到多个匹配 {pattern} 的图像文件")
+    return None
 
 def evaluate_quality(pred_dir, gt_dir, threshold_ssim=0.65, threshold_psnr=15, result_file=None):
     result = {
         "Process": True,
-        "Results": False,
+        "Result": False,
         "TimePoint": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         "comments": ""
     }
@@ -26,13 +38,12 @@ def evaluate_quality(pred_dir, gt_dir, threshold_ssim=0.65, threshold_psnr=15, r
         save_result(result_file, result)
         return
 
-    pred_path = os.path.join(pred_dir, "output.png")
-    gt_path = os.path.join(gt_dir, "gt.png")
+    pred_path = find_single_image(pred_dir, "output.*")
+    gt_path = find_single_image(gt_dir, "gt.*")
 
-    if not os.path.exists(pred_path) or not os.path.exists(gt_path):
+    if not pred_path or not gt_path:
         result["Process"] = False
-        result["comments"] = "预测图像或GT图像缺失"
-        print(f"⚠️ 缺失图像：{'output.png' if not os.path.exists(pred_path) else ''} {'gt.png' if not os.path.exists(gt_path) else ''}")
+        result["comments"] = "预测图像或GT图像缺失或匹配不唯一"
         save_result(result_file, result)
         return
 
@@ -57,11 +68,11 @@ def evaluate_quality(pred_dir, gt_dir, threshold_ssim=0.65, threshold_psnr=15, r
     print(f"平均峰值信噪比（PSNR）：{psnr_val:.2f}")
 
     if ssim_val >= threshold_ssim and psnr_val >= threshold_psnr:
-        result["Results"] = True
+        result["Result"] = True
         result["comments"] = f"测试通过，SSIM={ssim_val:.4f}, PSNR={psnr_val:.2f}"
         print("✅ 恢复效果达标")
     else:
-        result["Results"] = False
+        result["Result"] = False
         result["comments"] = f"测试未通过，SSIM={ssim_val:.4f}, PSNR={psnr_val:.2f}"
         print("❌ 恢复效果未达标")
 

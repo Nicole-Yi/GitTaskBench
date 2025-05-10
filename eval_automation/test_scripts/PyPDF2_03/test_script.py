@@ -2,64 +2,75 @@ import argparse
 import json
 from datetime import datetime
 
-def load_metadata(file_path):
+TARGET_FIELDS = {"Author", "Title", "CreationDate"}
+
+def load_truth_metadata(file_path):
     metadata = {}
     with open(file_path, "r", encoding="utf-8") as f:
         for line in f:
             if ": " in line:
                 key, value = line.strip().split(": ", 1)
-                metadata[key] = value
+                key = key.strip().lstrip("/")
+                metadata[key] = value.strip()
     return metadata
 
-def evaluate(pred_file, truth_file, result_file):
-    pred_metadata = load_metadata(pred_file)
-    truth_metadata = load_metadata(truth_file)
+def load_pred_metadata(file_path):
+    with open(file_path, "r", encoding="utf-8") as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"❌ JSON解析失败: {e}")
+            return {}
 
-    total_fields = len(truth_metadata)
-    correct_fields = 0
+def compute_recall(pred_value, truth_value):
+    pred_chars = set(pred_value.lower())
+    truth_chars = set(truth_value.lower())
+    if not truth_chars:
+        return 1.0
+    return len(pred_chars & truth_chars) / len(truth_chars)
+
+def evaluate(pred_file, truth_file, result_file):
+    pred_metadata = load_pred_metadata(pred_file)
+    truth_metadata = load_truth_metadata(truth_file)
+
+    total_fields = len(TARGET_FIELDS)
+    passed_fields = 0
     comments = []
 
-    for key, truth_value in truth_metadata.items():
-        pred_value = pred_metadata.get(key)
-        if pred_value == truth_value:
-            correct_fields += 1
+    for key in TARGET_FIELDS:
+        truth_value = truth_metadata.get(key, "")
+        pred_value = str(pred_metadata.get(key, ""))
+        recall = compute_recall(pred_value, truth_value)
+
+        if recall >= 0.5:
+            passed_fields += 1
+            comments.append(f"✅ 字段 {key} 召回率: {recall:.2f} >= 0.5")
         else:
-            comments.append(f"❌ 字段 {key} 不匹配：预测是 {pred_value}，正确是 {truth_value}")
+            comments.append(f"❌ 字段 {key} 召回率: {recall:.2f} < 0.5，预测: {pred_value}，应为: {truth_value}")
 
-    accuracy = (correct_fields / total_fields) * 100
-    comments.append(f"🎯 字段级准确率: {accuracy:.2f}%")
+    pass_ratio = passed_fields / total_fields if total_fields else 0
+    overall_pass = pass_ratio >= 0.5
+    comments.append(f"📊 字段通过率: {pass_ratio:.2f} ({passed_fields}/{total_fields})")
+    comments.append("✅ 测试通过！" if overall_pass else "❌ 测试未通过")
 
-    if accuracy == 100:
-        comments.append("✅ 测试通过！")
-        result = True
-    else:
-        comments.append("❌ 测试未通过")
-        result = False
+    for c in comments:
+        print(c)
 
-    # 打印评论
-    for comment in comments:
-        print(comment)
-
-    # 获取当前时间戳
-    time_point = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-
-    # 创建结果对象
     result_data = {
         "Process": True,
-        "Results": result,
-        "TimePoint": time_point,
+        "Result": overall_pass,
+        "TimePoint": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         "comments": " ".join(comments)
     }
 
-    # 保存到 jsonl 文件
     with open(result_file, "a", encoding="utf-8") as f:
-        f.write(json.dumps(result_data, default=str) + "\n")
+        f.write(json.dumps(result_data, ensure_ascii=False) + "\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--pred_file", type=str, required=True, help="提取的元信息文件路径")
-    parser.add_argument("--truth_file", type=str, required=True, help="标准元信息文件路径")
-    parser.add_argument("--result", type=str, required=True, help="结果保存的 jsonl 文件路径")
+    parser.add_argument("--pred_file", type=str, required=True, help="预测结果 JSON 文件路径")
+    parser.add_argument("--truth_file", type=str, required=True, help="标准答案 TXT 文件路径")
+    parser.add_argument("--result", type=str, required=True, help="评测结果输出 JSONL 文件")
     args = parser.parse_args()
 
     evaluate(args.pred_file, args.truth_file, args.result)

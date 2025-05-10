@@ -63,7 +63,7 @@ if [ -z "$INPUT_FILE" ]; then
     echo "[错误] 在 $OUTPUT_SUB_DIR 目录下未找到以output开头的文件"
     # 记录错误信息到结果文件
     python "$TEST_SCRIPT" \
-        --input "$OUTPUT_SUB_DIR/output_not_found.npy" \
+        --input "$INPUT_FILE" \
         --result "$RESULT_JSONL"
     exit 1
 fi

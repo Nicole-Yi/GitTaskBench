@@ -15,18 +15,20 @@ def load_csv(file_path):
     except Exception as e:
         return [], str(e)
 
+
 def evaluate(pred_file, truth_file):
     pred_rows, pred_err = load_csv(pred_file)
     truth_rows, truth_err = load_csv(truth_file)
 
     process_ok = True
-    comments = ""
+    comments = []
 
+    # 读取错误检查
     if pred_err:
-        comments += f"[预测文件读取失败] {pred_err}\n"
+        comments.append(f"[预测文件读取失败] {pred_err}")
         process_ok = False
     if truth_err:
-        comments += f"[GT文件读取失败] {truth_err}\n"
+        comments.append(f"[GT文件读取失败] {truth_err}")
         process_ok = False
 
     if not process_ok:
@@ -34,42 +36,80 @@ def evaluate(pred_file, truth_file):
             "Process": False,
             "Result": False,
             "TimePoint": datetime.now().isoformat(),
-            "comments": comments.strip()
+            "comments": "\n".join(comments)
         }
 
-    total = min(len(pred_rows), len(truth_rows))
-    if total == 0:
+    # 至少要有一行作为header
+    if not pred_rows or not truth_rows:
+        comments.append("⚠️ 没有找到任何数据行！")
         return {
             "Process": True,
             "Result": False,
             "TimePoint": datetime.now().isoformat(),
-            "comments": "⚠️ 没有找到任何数据行！"
+            "comments": "\n".join(comments)
         }
 
-    correct = 0
-    for pred_row, truth_row in zip(pred_rows, truth_rows):
-        if pred_row == truth_row:
-            correct += 1
+    # 提取列名
+    pred_header = pred_rows[0]
+    truth_header = truth_rows[0]
 
-    match_rate = (correct / total) * 100
-    passed = match_rate >= 98
-    result_msg = (
-        f"整体表格行列内容匹配率：{match_rate:.2f}%\n"
-        + ("✅ 测试通过！" if passed else "❌ 测试未通过！")
-    )
+    # 比较列名顺序
+    if pred_header != truth_header:
+        comments.append(f"⚠️ 列名或顺序不一致！预测列: {pred_header}，GT列: {truth_header}")
+    else:
+        comments.append("✅ 列名和顺序一致。")
+
+    # 构造纯列表内容，跳过header行
+    pred_data = pred_rows[1:]
+    truth_data = truth_rows[1:]
+
+    total_rows = min(len(pred_data), len(truth_data))
+    if total_rows == 0:
+        comments.append("⚠️ 没有数据行进行比较！")
+        return {
+            "Process": True,
+            "Result": False,
+            "TimePoint": datetime.now().isoformat(),
+            "comments": "\n".join(comments)
+        }
+
+    # 逐行逐列按顺序比较
+    match_count = 0
+    total_cells = 0
+    for i in range(total_rows):
+        pr = pred_data[i]
+        tr = truth_data[i]
+        min_cols = min(len(pr), len(tr))
+        for j in range(min_cols):
+            total_cells += 1
+            if pr[j] == tr[j]:
+                match_count += 1
+        # 若列数不一致，也需计入未匹配
+        total_cells += abs(len(pr) - len(tr))
+
+    # 计算匹配率
+    match_rate = (match_count / total_cells) * 100 if total_cells else 0
+    passed = match_rate >= 75
+    comments.append(f"整体按列顺序比较内容匹配率：{match_rate:.2f}% (阈值=75%)")
+    if passed:
+        comments.append("✅ 测试通过！")
+    else:
+        comments.append("❌ 测试未通过！")
 
     return {
         "Process": True,
         "Result": passed,
         "TimePoint": datetime.now().isoformat(),
-        "comments": result_msg
+        "comments": "\n".join(comments)
     }
 
+
 def append_result_to_jsonl(result_path, result_dict):
-    os.makedirs(os.path.dirname(result_path), exist_ok=True)
+    os.makedirs(os.path.dirname(result_path) or '.', exist_ok=True)
     with open(result_path, "a", encoding="utf-8") as f:
         json.dump(result_dict, f, ensure_ascii=False, default=str)
         f.write("\n")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -14,12 +14,12 @@ REPO_NAME="DeScratch_03"
 # 路径变量
 GT_DIR="${EVAL_AUTOMATION_DIR}/groundtruth"
 OUTPUT_DIR="${EVAL_AUTOMATION_DIR}/output"
-SCRIPT_PATH="${EVAL_AUTOMATION_DIR}/test_scripts/DeScratch_03/test_script.py"  # 确保此路径正确指向脚本
+SCRIPT_PATH="${EVAL_AUTOMATION_DIR}/test_scripts/DeScratch_03/test_script.py" 
 RESULT_DIR="${EVAL_AUTOMATION_DIR}/test_results"
 
 # 输出文件路径
 GT_SUB_DIR="${EVAL_AUTOMATION_DIR}/groundtruth/${REPO_NAME}/gt"
-OUTPUT_SUB_DIR="${EVAL_AUTOMATION_DIR}/output/${REPO_NAME}/output"
+OUTPUT_SUB_DIR="${EVAL_AUTOMATION_DIR}/output/${REPO_NAME}"
 RESULT_JSON="${RESULT_DIR}/${REPO_NAME}/results.jsonl"
 
 # 自动创建输出目录

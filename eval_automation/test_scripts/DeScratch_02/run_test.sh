@@ -40,7 +40,7 @@ check_file_exists() {
 }
 
 # 验证测试脚本和输入文件
-OUTPUT_SUB_DIR="${OUTPUT_DIR}/${REPO_NAME}/output"
+OUTPUT_SUB_DIR="${OUTPUT_DIR}/${REPO_NAME}"
 RESULT_JSON="${RESULT_DIR}/${REPO_NAME}/results.jsonl"
 ########################################################################################################
 # 需要修改，是否涉及01 02，格式 

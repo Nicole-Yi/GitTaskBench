@@ -60,7 +60,7 @@ def evaluate_green_background(input_path, output_path):
 
     # 保存绿色掩码用于调试
     green_mask_img = Image.fromarray(green_mask.astype(np.uint8) * 255)
-    green_mask_img.save('green_mask.png')
+
 
     # 指标 2：前景颜色保持度 (FCF)
     # 提取非绿色像素（假设为前景）
@@ -70,7 +70,7 @@ def evaluate_green_background(input_path, output_path):
     
     # 保存非绿色掩码用于调试
     non_green_mask_img = Image.fromarray(non_green_mask.astype(np.uint8) * 255)
-    non_green_mask_img.save('non_green_mask.png')
+
     
     if input_non_green.size == 0 or output_non_green.size == 0:
         fcf = float('inf')  # 无非绿色像素，任务失败
@@ -142,8 +142,8 @@ def save_result_to_jsonl(result_path, process, result, comments):
     
     # 构建 JSONL 记录
     record = {
-        "Process": process,
-        "Result": result,
+        "Process": bool(process),  # 确保是布尔值
+        "Result": bool(result),    # 确保是布尔值
         "TimePoint": time_point,
         "comments": comments
     }

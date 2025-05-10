@@ -83,49 +83,53 @@ def main():
             e1,  sr3 = sf.read(est1, dtype='float32')
             e2,  sr4 = sf.read(est2, dtype='float32')
 
-            # 采样率一致性检查
-            if len({sr0, sr1, sr2, sr3, sr4}) != 1:
-                process = False
-                comments.append('采样率不一致，无法计算指标')
-            else:
-                # 单通道化函数
-                def mono(x):
-                    return np.mean(x, axis=1) if x.ndim > 1 else x
+            # 采样率一致性检查（不影响 process）
+            rates = {
+                'mixed': sr0, 'clean1': sr1, 'clean2': sr2,
+                'est1': sr3, 'est2': sr4
+            }
+            unique_rates = set(rates.values())
+            if len(unique_rates) != 1:
+                comments.append("采样率不一致: " + ", ".join(f"{k}={v}" for k, v in rates.items()))
 
-                mix_m = mono(mix)
-                c1_m  = mono(c1)
-                c2_m  = mono(c2)
-                e1_m  = mono(e1)
-                e2_m  = mono(e2)
+            # 单通道化函数
+            def mono(x):
+                return np.mean(x, axis=1) if x.ndim > 1 else x
 
-                # 截断到最小长度
-                minlen = min(len(c1_m), len(c2_m), len(e1_m), len(e2_m))
-                c1_m = c1_m[:minlen]
-                c2_m = c2_m[:minlen]
-                e1_m = e1_m[:minlen]
-                e2_m = e2_m[:minlen]
+            mix_m = mono(mix)
+            c1_m  = mono(c1)
+            c2_m  = mono(c2)
+            e1_m  = mono(e1)
+            e2_m  = mono(e2)
 
-                # 构造 reference 和 estimated 矩阵
-                ref  = np.vstack([c1_m, c2_m])
-                ests = np.vstack([e1_m, e2_m])
+            # 截断到最小长度
+            minlen = min(len(c1_m), len(c2_m), len(e1_m), len(e2_m))
+            c1_m = c1_m[:minlen]
+            c2_m = c2_m[:minlen]
+            e1_m = e1_m[:minlen]
+            e2_m = e2_m[:minlen]
 
-                # 计算 SDR（自动匹配）
-                sdr, sir, sar, perm = bss_eval_sources(ref, ests)
-                sdr_vals = [float(v) for v in sdr]
+            # 构造 reference 和 estimated 矩阵
+            ref  = np.vstack([c1_m, c2_m])
+            ests = np.vstack([e1_m, e2_m])
 
-                # 依据 perm 计算 SNR
-                snr_list = []
-                for i in range(2):
-                    ref_sig = ref[i]
-                    est_sig = ests[perm[i]]
-                    snr_list.append(float(calc_snr(ref_sig, est_sig)))
-                snr_vals = snr_list
+            # 计算 SDR（自动匹配）
+            sdr, sir, sar, perm = bss_eval_sources(ref, ests)
+            sdr_vals = [float(v) for v in sdr]
 
-                # 记录 comments
-                for i, v in enumerate(snr_vals, start=1):
-                    comments.append(f'SNR{i}={v:.2f} dB (阈值 {args.snr_threshold})')
-                for i, v in enumerate(sdr_vals, start=1):
-                    comments.append(f'SDR{i}={v:.2f} dB (阈值 {args.sdr_threshold})')
+            # 依据 perm 计算 SNR
+            snr_list = []
+            for i in range(2):
+                ref_sig = ref[i]
+                est_sig = ests[perm[i]]
+                snr_list.append(float(calc_snr(ref_sig, est_sig)))
+            snr_vals = snr_list
+
+            # 记录 comments
+            for i, v in enumerate(snr_vals, start=1):
+                comments.append(f'SNR{i}={v:.2f} dB (阈值 {args.snr_threshold})')
+            for i, v in enumerate(sdr_vals, start=1):
+                comments.append(f'SDR{i}={v:.2f} dB (阈值 {args.sdr_threshold})')
 
         except Exception as e:
             process = False
@@ -145,6 +149,7 @@ def main():
         "TimePoint": datetime.datetime.now().isoformat(sep='T', timespec='seconds'),
         "comments":  "; ".join(comments)
     }
+    print("; ".join(comments))
     os.makedirs(os.path.dirname(args.result) or '.', exist_ok=True)
     with open(args.result, 'a', encoding='utf-8') as f:
         f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")

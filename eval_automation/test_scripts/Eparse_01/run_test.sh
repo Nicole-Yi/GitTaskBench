@@ -38,8 +38,8 @@ check_file_exists "${GT_FILE}"
 echo "=== [$(date)] 测试开始: ${REPO_NAME} ==="
 
 python "${TEST_SCRIPT}" \
-    --pred "${PRED_FILE}" \
-    --gt "${GT_FILE}" \
+    --pred_file "${PRED_FILE}" \
+    --truth_file "${GT_FILE}" \
     --result "${RESULT_JSON}"
 
 # === 结果状态判断 ===

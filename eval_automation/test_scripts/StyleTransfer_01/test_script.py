@@ -112,6 +112,7 @@ if __name__ == "__main__":
         "TimePoint": datetime.datetime.now().isoformat(sep='T', timespec='seconds'),
         "comments": "; ".join(comments)
     }
+    print(entry["comments"])
     os.makedirs(os.path.dirname(args.result) or '.', exist_ok=True)
     with open(args.result, 'a', encoding='utf-8') as f:
         f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")

@@ -13,7 +13,7 @@ RESULT_DIR="${DEFAULT_EVALING_DIR}/test_results/${REPO_NAME}"
 
 TEST_SCRIPT="${SCRIPT_DIR}/test_script.py"
 INPUT_FILE="${DEFAULT_EVALING_DIR}/groundtruth/${REPO_NAME}/gt.txt"  # 标准元信息文件路径
-OUTPUT_FILE="${DATA_DIR}/output.txt"  # 提取的元信息文件路径
+OUTPUT_FILE="${DATA_DIR}/output.json"  # 提取的元信息文件路径
 RESULT_FILE="${RESULT_DIR}/results.jsonl"  # 测试结果保存的 jsonl 文件路径
 
 # === 创建目录 ===

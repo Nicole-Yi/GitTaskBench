@@ -23,7 +23,7 @@ def main(pred_dir, gt_dir, iou_threshold=0.5, dice_threshold=0.6, result_file=No
     all_metrics = []
 
     # 初始化Process的默认状态为True，表示文件存在且有效
-    process_result = {"Process": True, "Results": False, "TimePoint": "", "comments": ""}
+    process_result = {"Process": True, "Result": False, "TimePoint": "", "comments": ""}
     process_result["TimePoint"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
     print(f"\n开始评估任务：")
@@ -46,14 +46,14 @@ def main(pred_dir, gt_dir, iou_threshold=0.5, dice_threshold=0.6, result_file=No
 
         gt_path = os.path.join(gt_dir, filename)
         
-        # 自动查找预测文件名，假设预测文件名固定为 output.png
-        pred_filename = 'output.png'  # 假设预测文件的文件名为 output.png
-        pred_path = os.path.join(pred_dir, pred_filename)
+        # 自动查找预测文件名，匹配 output.*
+        pred_filename = next((f for f in os.listdir(pred_dir) if f.startswith('output.') and f.lower().endswith(('.png', '.jpg', '.jpeg'))), None)
 
-        # 检查是否存在预测掩码文件
-        if not os.path.exists(pred_path):
-            print(f"⚠️ 预测文件缺失：{pred_filename}")
+        if not pred_filename:
+            print(f"⚠️ 预测文件缺失：{filename}")
             continue
+
+        pred_path = os.path.join(pred_dir, pred_filename)
 
         # 读取真实掩码和预测掩码
         gt_mask = np.array(Image.open(gt_path).convert("L")) > 128
@@ -85,11 +85,11 @@ def main(pred_dir, gt_dir, iou_threshold=0.5, dice_threshold=0.6, result_file=No
 
     # 判断最终的结果
     if avg_metrics["IoU"] >= iou_threshold and avg_metrics["Dice"] >= dice_threshold:
-        process_result["Results"] = True
+        process_result["Result"] = True
         process_result["comments"] = f"所有图像通过，平均IoU: {avg_metrics['IoU']:.3f}, 平均Dice: {avg_metrics['Dice']:.3f}"
         print(f"✅ 测试通过！")
     else:
-        process_result["Results"] = False
+        process_result["Result"] = False
         process_result["comments"] = f"测试未通过，平均IoU: {avg_metrics['IoU']:.3f}, 平均Dice: {avg_metrics['Dice']:.3f}"
         print(f"❌ 测试未通过")
 
@@ -112,3 +112,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(args.pred_dir, args.gt_dir, result_file=args.result)
+

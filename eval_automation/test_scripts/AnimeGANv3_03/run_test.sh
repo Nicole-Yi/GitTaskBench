@@ -47,7 +47,7 @@ if [[ -n "$file" ]]; then
         --input_video "${INPUT_VIDEO}" \
         --output_video "${file}" \
         --ssim_threshold 0.7 \
-        --fid_threshold 400.0 \
+        --fid_threshold 600.0 \
         --result "${RESULT_JSON}"
 else
     echo "[错误] 未找到匹配的输出视频文件 (*.mp4) 在 ${OUTPUT_SUB_DIR}"

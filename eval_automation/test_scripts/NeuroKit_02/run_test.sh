@@ -124,14 +124,3 @@ else
     
     RESULT="${RED}失败 - $ERROR_MSG${NC}"
 fi
-
-echo -e "\n${YELLOW}================ 评估结果 =================${NC}"
-echo -e "${BLUE}皮肤电活动分析: ${RESULT}${NC}"
-
-echo -e "\n${YELLOW}================ 评估结束 =================${NC}"
-
-# 显示使用说明
-echo -e "\n${BLUE}使用说明:${NC}"
-echo -e "  ${YELLOW}./run_evaluation.sh${NC}             - 仅评估现有输出结果"
-echo -e "  ${YELLOW}./run_evaluation.sh -r${NC}          - 先运行测试脚本生成输出，再评估结果"
-echo -e "  ${YELLOW}./run_evaluation.sh --result FILE${NC} - 指定JSONL结果文件保存路径" 

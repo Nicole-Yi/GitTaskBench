@@ -48,12 +48,16 @@ def evaluate_data(data):
     results['std'] = float(np.std(data))
     
     # 检查连续性 - 计算相邻帧之间的平均位移
-    frame_diffs = np.sqrt(np.sum(np.square(data[1:] - data[:-1]), axis=(1, 2)))
-    results['avg_frame_diff'] = float(np.mean(frame_diffs))
-    results['max_frame_diff'] = float(np.max(frame_diffs))
+    frame_diffs = np.sqrt(np.sum(np.square(data[1:] - data[:-1]), axis=(1, 2))) if data.shape[0] > 1 else np.array([])
+    
+    if frame_diffs.size > 0:
+        results['avg_frame_diff'] = float(np.mean(frame_diffs))
+        results['max_frame_diff'] = float(np.max(frame_diffs))
+    else:
+        results['avg_frame_diff'] = 0.0
+        results['max_frame_diff'] = 0.0
     
     # 检查骨骼长度一致性 - 我们期望骨骼长度在各帧之间保持相对稳定
-    # 以下是一个简化的骨骼连接定义，可以根据实际情况调整
     limbs = [
         (0, 1),  # 头到颈部
         (1, 2), (2, 3),  # 右臂
@@ -76,7 +80,6 @@ def evaluate_data(data):
     results['bone_length_stability'] = bone_lengths
     
     # 整体评分（0-100分）
-    # 基于各种指标分配权重
     score = 100.0
     
     # 如果有NaN值，扣20分
@@ -96,6 +99,7 @@ def evaluate_data(data):
     
     return results
 
+
 def save_results_to_jsonl(process_status, test_passed, comments, result_file):
     """
     将评估结果保存到jsonl文件
@@ -109,7 +113,7 @@ def save_results_to_jsonl(process_status, test_passed, comments, result_file):
     # 准备要保存的数据
     result_data = {
         "Process": process_status,
-        "Results": test_passed,
+        "Result": test_passed,
         "TimePoint": current_time,
         "comments": comments
     }
@@ -137,12 +141,22 @@ def main():
         save_results_to_jsonl(False, False, comments, args.result)
         return 1
     
-    # 检查数据是否为空
-    if data.size == 0:
-        comments = f"错误: 输入文件 {args.input} 是空的"
-        save_results_to_jsonl(False, False, comments, args.result)
-        return 1
-    
+    # 处理 .npz 文件：提取其中一个数组（你可以根据实际情况指定名称）
+    if isinstance(data, np.lib.npyio.NpzFile):
+        if len(data.files) == 0:
+            comments = f"错误: 输入文件 {args.input} 中没有任何数组"
+            save_results_to_jsonl(False, False, comments, args.result)
+            return 1
+        first_key = data.files[0]
+        data = data[first_key]
+
+    # === 添加兼容 shape ===
+    # 如果是形如 (1, 1, joints, 3)，转为 (1, joints, 3)
+    if len(data.shape) == 4 and data.shape[0] == 1 and data.shape[1] == 1 and data.shape[3] == 3:
+        data = data[0, 0]  # -> (17, 3)
+        data = data[np.newaxis, ...]  # -> (1, 17, 3)
+
+
     # 检查数据格式
     if len(data.shape) != 3 or data.shape[2] != 3:
         comments = f"错误: 输入文件格式不正确，预期形状为(frames, joints, 3)，但实际为{data.shape}"

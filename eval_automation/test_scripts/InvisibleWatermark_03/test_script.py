@@ -59,6 +59,7 @@ def evaluate_watermark(original_path, watermark_text, watermarked_path):
         "TimePoint": time_point,
         "Comments":  "\n".join(comments)
     }
+    print(output_data["Comments"])
     return output_data
 
 def write_to_jsonl(file_path, data):

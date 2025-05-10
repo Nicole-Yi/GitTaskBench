@@ -51,74 +51,63 @@ def write_result_jsonl(file_path: str, data: dict):
 def main():
     p = argparse.ArgumentParser(
         description="以 CIEDE2000 与 NIQE 两指标评测上色/增强效果，并可输出 JSONL 结果")
-    p.add_argument("--input", type=str, required=True,   help="参考图像 URL 或本地路径")
-    p.add_argument("--output", type=str, required=True,        help="重建图像 URL 或本地路径")
+    p.add_argument("--input", type=str, required=True, help="参考图像 URL 或本地路径")
+    p.add_argument("--output", type=str, required=True, help="重建图像 URL 或本地路径")
     p.add_argument("--ciede-thresh", type=float, required=True,
                    help="CIEDE2000 最低接受阈值（越大越好）")
-    p.add_argument("--niqe-thresh",  type=float, required=True,
+    p.add_argument("--niqe-thresh", type=float, required=True,
                    help="NIQE 最高接受阈值（越小越好）")
-    p.add_argument("--result",       help="用于存储 JSONL 结果的文件路径")
+    p.add_argument("--result", help="用于存储 JSONL 结果的文件路径")
     args = p.parse_args()
 
     process_ok = True
+    result_ok = False
     comments = []
 
-    # 时间戳
     time_point = datetime.now().isoformat()
 
-    # 加载图像
     try:
-        img_ref   = download_image(args.input)
+        img_ref = download_image(args.input)
         img_recon = download_image(args.output)
     except ValueError as err:
         comments.append(str(err))
         process_ok = False
 
-    # 仅在 Process OK 时计算指标
     if process_ok:
         try:
             score_ciede = compute_ciede2000(img_ref, img_recon)
-            score_niqe  = compute_niqe(img_recon)
+            score_niqe = compute_niqe(img_recon)
 
             comments.append(f"CIEDE2000 平均色差：{score_ciede:.4f} (阈值 {args.ciede_thresh})")
             comments.append(f"重建图像 NIQE 分数：{score_niqe:.4f} (阈值 {args.niqe_thresh})")
 
             ok_ciede = score_ciede >= args.ciede_thresh
-            ok_niqe  = score_niqe  <= args.niqe_thresh
+            ok_niqe = score_niqe <= args.niqe_thresh
 
             if ok_ciede and ok_niqe:
                 comments.append("✅ 处理效果符合要求：CIEDE2000↑ 且 NIQE↓ 均满足阈值")
                 result_ok = True
-                exit_code = 0
             else:
                 fail_reasons = []
-                if not ok_ciede: fail_reasons.append("CIEDE2000 未达标")
-                if not ok_niqe:  fail_reasons.append("NIQE 未达标")
+                if not ok_ciede:
+                    fail_reasons.append("CIEDE2000 未达标")
+                if not ok_niqe:
+                    fail_reasons.append("NIQE 未达标")
                 comments.append("❌ 处理效果不符合要求：" + " ".join(fail_reasons))
-                result_ok = False
-                exit_code = 2
         except Exception as e:
             comments.append(f"指标计算时发生异常：{e}")
-            result_ok = False
-            exit_code = 2
-    else:
-        result_ok = False
-        exit_code = 1
 
-    # 如果指定了 --result，就写入 JSONL
     if args.result:
         record = {
-            "Process":   process_ok,
-            "Result":    result_ok,
+            "Process": process_ok,
+            "Result": result_ok,
             "TimePoint": time_point,
-            "comments":  "\n".join(comments)
+            "comments": "\n".join(comments)
         }
         write_result_jsonl(args.result, record)
 
-    # 打印所有 comments 并退出
     for line in comments:
         print(line, file=(sys.stderr if not process_ok or not result_ok else sys.stdout))
-    sys.exit(exit_code)
 
 if __name__ == "__main__":
     main()

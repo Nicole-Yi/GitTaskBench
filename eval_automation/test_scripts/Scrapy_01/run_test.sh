@@ -12,7 +12,7 @@ GT_DIR="${DEFAULT_EVALING_DIR}/groundtruth/${REPO_NAME}"
 OUT_DIR="${DEFAULT_EVALING_DIR}/output/${REPO_NAME}"
 RESULT_DIR="${DEFAULT_EVALING_DIR}/test_results/${REPO_NAME}"
 
-PRED_FILE="${OUT_DIR}/output.jsonl"
+PRED_FILE=$(find "${OUT_DIR}" -name "output.*" | head -n 1)  # 查找并选择第一个 output.* 文件
 GT_FILE="${GT_DIR}/gt.jsonl"
 RESULT_FILE="${RESULT_DIR}/results.jsonl"
 SCRIPT_FILE="${SCRIPT_DIR}/test_script.py"
@@ -31,11 +31,17 @@ check_file_exists() {
     fi
 }
 
+# 检查 OUT_DIR 下是否存在 output.* 文件
+if [ -z "$PRED_FILE" ]; then
+    echo "❌ 在 ${OUT_DIR} 中未找到 output.* 文件"
+    exit 1
+fi
+
 check_file_exists "${SCRIPT_FILE}"
 check_file_exists "${PRED_FILE}"
 check_file_exists "${GT_FILE}"
 
-echo "=== [$(date)] 开始测试 ${REPO_NAME} ==="
+echo "=== 开始测试 ${REPO_NAME} ==="
 
 python "${SCRIPT_FILE}" \
   --pred_file "${PRED_FILE}" \

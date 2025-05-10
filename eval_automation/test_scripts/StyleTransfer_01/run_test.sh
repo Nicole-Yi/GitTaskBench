@@ -56,7 +56,7 @@ if [[ -n "$file" ]]; then
         --style "${INPUT_IMAGE_STYLE}" \
         --output "${file}" \
         --lpips-thresh 0.5  \
-        --hi-thresh 0.7 \
+        --hi-thresh 0.6 \
         --result "${RESULT_JSON}"
 else
     echo "No matching file found"

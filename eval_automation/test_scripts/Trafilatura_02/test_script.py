@@ -1,9 +1,15 @@
 import os
 import argparse
+import numpy as np
+import json
+import datetime
+
+# 引入Levenshtein距离的计算函数
+from Levenshtein import distance as levenshtein_distance
 
 def evaluate_extraction(pred_path, gt_path):
     # 固定阈值
-    threshold = 0.95
+    threshold = 0.5  # 编辑距离低于这个阈值即认为预测成功
 
     # 检查文件是否存在
     def check_file_exists(file_path):
@@ -26,48 +32,50 @@ def evaluate_extraction(pred_path, gt_path):
     with open(gt_path, 'r', encoding='utf-8') as f:
         gt_text = f.read()
     
-    # 计算字符级准确率
-    match_count = sum(1 for p, g in zip(pred_text, gt_text) if p == g)
-    total_count = len(gt_text)
-    char_accuracy = match_count / total_count if total_count > 0 else 0
+    # 计算编辑距离
+    edit_distance = levenshtein_distance(pred_text, gt_text)
+    max_len = max(len(pred_text), len(gt_text))
+    
+    # 计算编辑距离比率
+    edit_distance_ratio = edit_distance / max_len if max_len > 0 else 0
 
-    # 输出准确率
-    print(f"字符级准确率（Char Accuracy）: {char_accuracy:.4f}")
+    # 输出编辑距离比率
+    print(f"编辑距离比率（Edit Distance Ratio）: {edit_distance_ratio:.4f}")
 
     # 判断是否达到阈值
-    if char_accuracy >= threshold:
+    if edit_distance_ratio <= threshold:
         print("✅ 正确完成")
     else:
         print("❌ 提取有误")
 
-    return char_accuracy
+    return edit_distance_ratio
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate the character-level accuracy of markdown content extraction.")
+    parser = argparse.ArgumentParser(description="Evaluate the edit distance between extracted and ground truth markdown content.")
     parser.add_argument('--pred_path', type=str, required=True, help='Path to the extracted prediction markdown file')
     parser.add_argument('--gt_path', type=str, required=True, help='Path to the ground truth markdown file')
     parser.add_argument('--result', type=str, required=True, help='Path to save the result in jsonl format')
 
     args = parser.parse_args()
 
-    # 计算提取准确度
-    accuracy = evaluate_extraction(pred_path=args.pred_path, gt_path=args.gt_path)
+    # 计算提取准确度（编辑距离比率）
+    edit_distance_ratio = evaluate_extraction(pred_path=args.pred_path, gt_path=args.gt_path)
 
     # 保存结果
     result = {
         "Process": True,
-        "Results": accuracy >= 0.95,
-        "TimePoint": os.popen('date +"%Y-%m-%dT%H:%M:%S"').read().strip(),
-        "comments": f"字符级准确率: {accuracy:.4f} {'满足' if accuracy >= 0.95 else '不满足'} 95% 精度要求"
+        "Result": edit_distance_ratio <= 0.5,  # 判断编辑距离比率是否低于阈值
+        "TimePoint": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        "comments": f"编辑距离比率: {edit_distance_ratio:.4f} {'满足' if edit_distance_ratio <= 0.5 else '不满足'} 50% 精度要求"
     }
 
     # 如果文件存在，追加写入，否则创建新文件
     if os.path.exists(args.result):
         with open(args.result, 'a', encoding='utf-8') as f:
-            f.write(f"{str(result)}\n")
+            f.write(json.dumps(result, ensure_ascii=False) + '\n')
     else:
         with open(args.result, 'w', encoding='utf-8') as f:
-            f.write(f"{str(result)}\n")
+            f.write(json.dumps(result, ensure_ascii=False) + '\n')
 
     print(f"结果已保存到: {args.result}")
 

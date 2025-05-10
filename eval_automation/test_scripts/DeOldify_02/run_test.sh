@@ -54,7 +54,6 @@ check_file_exists "${INPUT_IMAGE}"
 # --- 执行核心命令 ---
 echo "=== 开始处理仓库 ${REPO_NAME} ==="
 
-# 在 output/ 下，查找名为 output 后跟任意后缀的文件
 file=$(find "$OUTPUT_SUB_DIR" -maxdepth 1 -type f -name 'output.*' | head -n1)
 
 if [[ -n "$file" ]]; then
@@ -68,13 +67,9 @@ else
     echo "No matching file found"
 fi
 
-
-
-
-# --- 检查执行结果 ---
-if [ $? -eq 0 ]; then
-    echo "[成功] 输出文件: ${RESULT_JSON}"
+# --- 检查是否生成结果文件 ---
+if [ -s "${RESULT_JSON}" ]; then
+    echo "[成功] 已生成结果文件: ${RESULT_JSON}"
 else
-    echo "[失败] 请检查以上错误信息！"
-    exit 1
+    echo "[警告] 未生成结果文件或为空，请检查处理过程是否失败！"
 fi
