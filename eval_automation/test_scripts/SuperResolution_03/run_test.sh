@@ -21,7 +21,6 @@ mkdir -p "${GT_DIR}/${REPO_NAME}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        exit 1
     fi
 }
 
@@ -55,5 +54,4 @@ if [[ -n "$file" ]]; then
     fi
 else
     echo "[错误] 文件不存在: ${OUTPUT_SUB_DIR}/output.*"
-    exit 1
 fi

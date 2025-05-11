@@ -23,11 +23,9 @@ mkdir -p "${SCRIPT_DIR}" "${GT_DIR}" "${OUT_DIR}" "${RESULT_DIR}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "❌ 文件不存在: $1"
-        exit 1
     fi
     if [ ! -s "$1" ]; then
         echo "❌ 文件为空: $1"
-        exit 1
     fi
 }
 
@@ -46,5 +44,4 @@ if [ $? -eq 0 ]; then
     echo "✅ 测试成功，结果写入: ${RESULT_FILE}"
 else
     echo "❌ 测试失败"
-    exit 1
 fi

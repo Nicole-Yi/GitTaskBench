@@ -25,7 +25,6 @@ INPUT_IMAGE="${GT_DIR}/${REPO_NAME}/gt.jpg"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        # exit 1  # 删除了 exit 以继续执行
     fi
 }
 
@@ -39,7 +38,6 @@ mkdir -p "${GT_DIR}/${REPO_NAME}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        # exit 1  # 删除了 exit 以继续执行
     fi
 }
 
@@ -59,22 +57,18 @@ file=$(find "$OUTPUT_SUB_DIR" -maxdepth 1 -type f -name 'output.*' | head -n1)
 
 # --- 执行核心命令 ---
 echo "=== 开始处理仓库 ${REPO_NAME} ==="
-if [[ -n "$file" ]]; then
-    python "${TEST_SCRIPT}" \
-        --input "${INPUT_IMAGE}" \
-        --output "${file}" \
-        --ciede-thresh 2.0  \
-        --niqe-thresh 7.0 \
-        --result "${RESULT_JSON}"
+
+python "${TEST_SCRIPT}" \
+    --input "${INPUT_IMAGE}" \
+    --output "${file}" \
+    --ciede-thresh 2.0  \
+    --niqe-thresh 7.0 \
+    --result "${RESULT_JSON}"
     
     # --- 检查执行结果 ---
-    if [ $? -eq 0 ]; then
-        echo "[成功] 输出文件: ${OUTPUT_SUB_DIR}/output.png"
-    else
-        echo "[失败] 请检查以上错误信息！"
-        # exit 1  # 删除了 exit 以继续执行
-    fi
+if [ $? -eq 0 ]; then
+    echo "[成功] 输出文件: ${OUTPUT_SUB_DIR}/output.png"
 else
-    echo "[错误] 文件不存在: ${OUTPUT_SUB_DIR}/output.*"
-    # exit 1  # 删除了 exit 以继续执行
+    echo "[失败] 请检查以上错误信息！"
 fi
+

@@ -29,7 +29,6 @@ mkdir -p "${RESULT_DIR}/${REPO_NAME}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        # exit 1  # 删除了 exit 以继续执行
     fi
 }
 
@@ -48,15 +47,12 @@ check_file_exists "${TEST_SCRIPT}"
 echo "=== 开始处理仓库 ${REPO_NAME} ==="
 # 在 output/ 下，查找名为 output 后跟任意后缀的文件
 file=$(find "$OUTPUT_SUB_DIR" -maxdepth 1 -type f -name 'output.*' | head -n1)
-if [[ -n "$file" ]]; then
-    python "${TEST_SCRIPT}" \
-        --input "${INPUT_IMAGE}" \
-        --output "${file}" \
-        --lpips-thresh 0.30  \
-        --result "${RESULT_JSON}"
-else
-    echo "No matching file found"
-fi
+
+python "${TEST_SCRIPT}" \
+    --input "${INPUT_IMAGE}" \
+    --output "${file}" \
+    --lpips-thresh 0.30  \
+    --result "${RESULT_JSON}"
 
 
 # --- 检查执行结果 ---
@@ -64,5 +60,4 @@ if [ $? -eq 0 ]; then
     echo "[成功] 输出文件: ${RESULT_JSON}"
 else
     echo "[失败] 请检查以上错误信息！"
-    # exit 1  # 删除了 exit 以继续执行
 fi

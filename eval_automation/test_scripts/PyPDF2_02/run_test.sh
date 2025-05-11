@@ -23,14 +23,12 @@ mkdir -p "${RESULT_DIR}"
 check_dir_exists() {
     if [ ! -d "$1" ]; then
         echo "[❌ 错误] 目录不存在: $1"
-        exit 1
     fi
 }
 
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[❌ 错误] 文件不存在: $1"
-        exit 1
     fi
 }
 
@@ -49,5 +47,4 @@ if [ $? -eq 0 ]; then
     echo "[✅ 成功] 测试完成，结果追加至 ${RESULT_JSON}"
 else
     echo "[❌ 失败] 脚本运行出错"
-    exit 1
 fi

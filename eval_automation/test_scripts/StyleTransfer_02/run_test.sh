@@ -27,7 +27,6 @@ mkdir -p "${RESULT_DIR}/${REPO_NAME}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        exit 1
     fi
 }
 
@@ -47,19 +46,16 @@ check_file_exists "${INPUT_IMAGE}"
 echo "=== 开始处理仓库 ${REPO_NAME} ==="
 file=$(find "$OUTPUT_SUB_DIR" -maxdepth 1 -type f -name 'output.*' | head -n1)
 
-if [[ -n "$file" ]]; then
-    python "${TEST_SCRIPT}" \
-        --input_img_path "${INPUT_IMAGE}" \
-        --output_img_path "${file}" \
-        --result "${RESULT_JSON}"
-else
-    echo "No matching file found"
-fi
+
+python "${TEST_SCRIPT}" \
+    --input_img_path "${INPUT_IMAGE}" \
+    --output_img_path "${file}" \
+    --result "${RESULT_JSON}"
+
 
 # --- 检查执行结果 ---
 if [ $? -eq 0 ]; then
     echo "[成功] 输出文件: ${RESULT_JSON}"
 else
     echo "[失败] 请检查以上错误信息！"
-    exit 1
 fi

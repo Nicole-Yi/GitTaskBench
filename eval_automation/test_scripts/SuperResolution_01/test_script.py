@@ -2,113 +2,119 @@
 import os
 import sys
 import argparse
-import cv2                             # pip install opencv-python
-import numpy as np
 import json
-from datetime import datetime
-from skimage.metrics import (
-    peak_signal_noise_ratio,          # PSNR
-    structural_similarity             # SSIM
-)
+import datetime
+import cv2
+import numpy as np
+import torch
+import lpips
+from torchvision import transforms
+import torch.nn.functional as F
+from PIL import Image, UnidentifiedImageError
 
-def check_file(path, exts=('.png', '.jpg', '.jpeg', '.webp')):
+def verify_image(path, exts=('.png', '.jpg', '.jpeg', '.webp')):
+    """检查文件存在、非空、扩展名合法，并能被 PIL 打开。"""
     if not os.path.isfile(path):
-        sys.exit(f"错误：文件不存在 -> {path}")
+        return False, f'文件不存在：{path}'
+    if os.path.getsize(path) == 0:
+        return False, f'文件为空：{path}'
     if not path.lower().endswith(exts):
-        sys.exit(f"错误：不支持的格式 -> {path}")
+        return False, f'不支持的格式：{path}'
+    try:
+        img = Image.open(path)
+        img.verify()
+    except (UnidentifiedImageError, Exception) as e:
+        return False, f'无法读取图像：{path} （{e}）'
+    return True, ''
 
-def load_and_prepare(path, target_shape=None):
+def load_tensor(path):
+    """按原脚本方式载入并归一化到 [-1,1] 的 Tensor"""
     img = cv2.imread(path, cv2.IMREAD_COLOR)
     if img is None:
-        sys.exit(f"错误：无法读取图像 -> {path}")
+        raise RuntimeError(f'cv2 读取失败：{path}'
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    if target_shape and img.shape[:2] != target_shape:
-        img = cv2.resize(img, (target_shape[1], target_shape[0]),
-                         interpolation=cv2.INTER_LINEAR)
-    return img
+    t = transforms.ToTensor()(img) * 2 - 1
+    return t.unsqueeze(0)
 
-def save_result_jsonl(process, results, comments, result_file):
-    """
-    将单条记录以 JSONL 格式追加到文件
-    """
-    record = {
-        "Process": bool(process),
-        "Result": bool(results),
-        "TimePoint": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-        "comments": comments
-    }
-    # 确保目录存在
-    os.makedirs(os.path.dirname(result_file), exist_ok=True)
-    # 追加写入一行 JSONL
-    with open(result_file, 'a', encoding='utf-8') as f:
-        f.write(json.dumps(record, ensure_ascii=False, default=str))
-        f.write("\n")
-
-def main():
-    p = argparse.ArgumentParser(
-        description="评估重建图像与参考图像的 PSNR/SSIM，并动态适配 win_size，输出 JSONL 格式结果"
-    )
-    p.add_argument('ref', help="参考图像路径")
-    p.add_argument('sr',  help="重建/超分图像路径")
-    p.add_argument('--psnr-thresh', type=float, default=18.0,
-                   help="PSNR 阈值 (dB)")
-    p.add_argument('--ssim-thresh', type=float, default=0.80,
-                   help="SSIM 阈值")
-    p.add_argument('--result', required=True,
-                   help="输出 JSONL 文件路径")
-    args = p.parse_args()
-
-    process = os.path.exists(args.sr)
-    if not process:
-        comments = f"预测文件不存在：{args.sr}"
-        save_result_jsonl(process, False, comments, args.result)
-        print(False)
-        sys.exit(0)
-
-    try:
-        # 1. 文件合法性检测
-        check_file(args.ref)
-        check_file(args.sr)
-
-        # 2. 读取参考图像得到目标尺寸
-        ref0 = cv2.imread(args.ref, cv2.IMREAD_COLOR)
-        H, W = ref0.shape[:2]
-
-        # 3. 加载并可能 Resize
-        ref = load_and_prepare(args.ref, (H, W))
-        sr  = load_and_prepare(args.sr,  (H, W))
-
-        # 4. 计算 PSNR
-        psnr_val = peak_signal_noise_ratio(ref, sr, data_range=255)
-
-        # 5. 动态计算 SSIM 窗口大小
-        win = min(H, W)
-        if win % 2 == 0:
-            win -= 1
-        win = max(win, 1)
-
-        # 6. 计算 SSIM
-        ssim_val = structural_similarity(
-            ref, sr,
-            channel_axis=-1,
-            win_size=win,
-            data_range=255
-        )
-
-        # 7. 判定结果
-        results = (psnr_val >= args.psnr_thresh) and (ssim_val >= args.ssim_thresh)
-        comments = (
-            f"PSNR: {psnr_val:.2f} dB (阈值: {args.psnr_thresh}), "
-            f"SSIM: {ssim_val:.4f} (阈值: {args.ssim_thresh}, win_size={win})"
-        )
-
-        save_result_jsonl(process, results, comments, args.result)
-        print(results)
-
-    except Exception as e:
-        save_result_jsonl(process, False, str(e), args.result)
-        print(False)
-        sys.exit(1)
+def histogram_intersection(a, b, bins=256):
+    """计算两张图 RGB 通道直方图的平均交集比率"""
+    inters = []
+    for ch in range(3):
+        h1 = cv2.calcHist([a], [ch], None, [bins], [0,256]).ravel()
+        h2 = cv2.calcHist([b], [ch], None, [bins], [0,256]).ravel()
+        if h1.sum() > 0:
+            h1 = h1 / h1.sum()
+        if h2.sum() > 0:
+            h2 = h2 / h2.sum()
+        inters.append(np.minimum(h1, h2).sum())
+    return float(np.mean(inters))
 
 if __name__ == "__main__":
-    main()
+    p = argparse.ArgumentParser(description='自动化风格迁移效果检测脚本')
+    p.add_argument('--content',    required=True, help='原始内容图像路径')
+    p.add_argument('--style',      required=True, help='参考风格图像路径')
+    p.add_argument('--output',     required=True, help='风格化后图像路径')
+    p.add_argument('--lpips-thresh', type=float, default=0.5, help='LPIPS 阈值 (>= 通过)')
+    p.add_argument('--hi-thresh',    type=float, default=0.7, help='HI(直方图交集) 阈值 (>= 通过)')
+    p.add_argument('--result',      required=True, help='结果 JSONL 文件路径，追加模式')
+    args = p.parse_args()
+
+    process = True
+    comments = []
+
+    # ——— 1. 检验所有文件 —
+    for tag, path in [('content', args.content), ('style', args.style), ('output', args.output)]:
+        ok, msg = verify_image(path)
+        if not ok:
+            process = False
+            comments.append(f'[{tag}] {msg}')
+
+    # ——— 2. 计算指标（仅当 process==True） —
+    lpips_pass = hi_pass = False
+    lpips_val = hi_val = None
+    if process:
+        try:
+            # LPIPS between content 与 output
+            img_c = load_tensor(args.content)
+            img_o = load_tensor(args.output)
+            # 对齐尺寸
+            _, _, h0, w0 = img_c.shape
+            _, _, h1, w1 = img_o.shape
+            nh, nw = min(h0,h1), min(w0,w1)
+            if (h0,w0)!=(nh,nw):
+                img_c = F.interpolate(img_c, size=(nh,nw), mode='bilinear', align_corners=False)
+            if (h1,w1)!=(nh,nw):
+                img_o = F.interpolate(img_o, size=(nh,nw), mode='bilinear', align_corners=False)
+
+            loss_fn = lpips.LPIPS(net='vgg').to(torch.device('cpu'))
+            with torch.no_grad():
+                lpips_val = float(loss_fn(img_c, img_o).item())
+            lpips_pass = lpips_val >= args.lpips_thresh
+
+            # HI between style 与 output
+            img_s = cv2.imread(args.style, cv2.IMREAD_COLOR)
+            img_o_cv = cv2.imread(args.output, cv2.IMREAD_COLOR)
+            hi_val = histogram_intersection(img_s, img_o_cv)
+            hi_pass = hi_val >= args.hi_thresh
+
+            comments.append(f'LPIPS={lpips_val:.4f} (>= {args.lpips_thresh} → {"OK" if lpips_pass else "FAIL"})')
+            comments.append(f'HI={hi_val:.4f} (>= {args.hi_thresh} → {"OK" if hi_pass else "FAIL"})')
+
+        except Exception as e:
+            process = False
+            comments.append(f'指标计算出错：{e}')
+
+    # ——— 3. 写入 JSONL —
+    result_flag = (process and lpips_pass and hi_pass)
+    entry = {
+        "Process": process,
+        "Result":  result_flag,
+        "TimePoint": datetime.datetime.now().isoformat(sep='T', timespec='seconds'),
+        "comments": "; ".join(comments)
+    }
+    os.makedirs(os.path.dirname(args.result) or '.', exist_ok=True)
+    with open(args.result, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
+
+    # ——— 4. 输出最终状态（替代原退出逻辑）———
+    print("\n测试完成 - 最终状态: " + ("通过" if result_flag else "未通过"))

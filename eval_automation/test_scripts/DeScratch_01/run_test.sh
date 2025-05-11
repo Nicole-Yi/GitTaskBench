@@ -12,18 +12,17 @@ DEFAULT_EVALING_DIR="${WORKSPACE_DIR}"
 # GitTaskBench文件夹
 GIT_ROOT_DIR="${WORKSPACE_DIR}/.."
 
-### 下为临时修改 为了run 划痕检测并输出
-#DeScratch下Gloabl文件夹
-MASK_DETECTION="${GIT_ROOT_DIR}/code_base/DeScratch/Global"
 
-DETECTION="${MASK_DETECTION}/detection.py"
-###
+
+
+
 
 GT_DIR="${DEFAULT_EVALING_DIR}/groundtruth"
 OUTPUT_DIR="${DEFAULT_EVALING_DIR}/output"
 SCRIPT_DIR="${DEFAULT_EVALING_DIR}/test_scripts"
 RESULT_DIR="${DEFAULT_EVALING_DIR}/test_results"
 
+DETECTION="${SCRIPT_DIR}/${REPO_NAME}/detection.py"
 
 # --- 自动创建缺失目录 ---
 mkdir -p "${GT_DIR}/${REPO_NAME}"
@@ -75,14 +74,10 @@ mask_dir="${DETECT_OUTPUT_DIR}/mask"
 # 查找所有以 output 开头的文件
 file=$(find "$mask_dir" -maxdepth 1 -type f -name 'output.*' | head -n1)
 
-if [[ -n "$file" ]]; then
-    python "${TEST_SCRIPT}" \
-        --output "${file}" \
-        --result "${RESULT_JSON}"
-else
-    echo "No matching file found"
-fi
 
+python "${TEST_SCRIPT}" \
+    --output "${file}" \
+    --result "${RESULT_JSON}"
 
 
 # --- 检查执行结果 ---

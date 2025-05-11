@@ -117,5 +117,5 @@ if __name__ == "__main__":
     with open(args.result, 'a', encoding='utf-8') as f:
         f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
 
-    # ——— 4. 退出码 —
-    sys.exit(0)
+    # ——— 4. 输出最终状态（替代原退出逻辑）———
+    print("\n测试完成 - 最终状态: " + ("通过" if result_flag else "未通过"))

@@ -74,8 +74,8 @@ def main():
     if args.result:
         write_to_jsonl(args.result, result)
 
-    # 返回退出码
-    sys.exit(0 if result["Process"] and result["Result"] else 1)
+    # 输出最终状态（替代原退出逻辑）
+    print("\n测试完成 - 最终状态: " + ("通过" if result["Process"] and result["Result"] else "未通过"))
 
 if __name__ == "__main__":
     main()

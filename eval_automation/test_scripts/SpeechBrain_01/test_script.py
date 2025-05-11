@@ -57,6 +57,7 @@ def main():
             process = False
             comments.append(f'[{tag}] {msg}')
 
+
     # 2. 验证输出目录及文件
     if not os.path.isdir(args.estimated_dir):
         process = False
@@ -154,8 +155,8 @@ def main():
     with open(args.result, 'a', encoding='utf-8') as f:
         f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
 
-    # 6. 退出
-    sys.exit(0 if result_flag else 1)
+    # 6. 输出最终状态（替代原退出逻辑）
+    print("测试完成 - 状态: " + ("通过" if result_flag else "未通过"))
 
 if __name__ == "__main__":
     main()

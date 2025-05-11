@@ -1,76 +1,118 @@
 import argparse
 import json
+import os
+import sys
 from datetime import datetime
 
-TARGET_FIELDS = {"Author", "Title", "CreationDate"}
+TARGET_FIELDS = ["Author", "Title", "CreationDate"]
+
 
 def load_truth_metadata(file_path):
     metadata = {}
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, 'r', encoding='utf-8') as f:
         for line in f:
-            if ": " in line:
-                key, value = line.strip().split(": ", 1)
-                key = key.strip().lstrip("/")
-                metadata[key] = value.strip()
+            if ': ' in line:
+                key, val = line.strip().split(': ', 1)
+                key = key.strip().lstrip('/')
+                metadata[key] = val.strip()
     return metadata
 
-def load_pred_metadata(file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
-        try:
-            return json.load(f)
-        except json.JSONDecodeError as e:
-            print(f"❌ JSON解析失败: {e}")
-            return {}
 
-def compute_recall(pred_value, truth_value):
-    pred_chars = set(pred_value.lower())
-    truth_chars = set(truth_value.lower())
+def load_pred_metadata(file_path):
+    # support json, jsonl, txt key:value
+    try:
+        content = None
+        # try text read
+        for enc in ['utf-8', 'latin-1', 'gbk', 'utf-16']:
+            try:
+                with open(file_path, 'r', encoding=enc) as f:
+                    content = f.read()
+                break
+            except Exception:
+                continue
+        if content is None:
+            raise ValueError('cannot read file')
+        content = content.strip()
+        # JSON object or array
+        if content.startswith('{') or content.startswith('['):
+            try:
+                data = json.loads(content)
+                if isinstance(data, list) and data and isinstance(data[0], dict):
+                    data = data[0]
+                if isinstance(data, dict):
+                    return data
+            except Exception:
+                # try jsonl: parse last valid line
+                for line in content.splitlines()[::-1]:
+                    try:
+                        doc = json.loads(line)
+                        if isinstance(doc, dict):
+                            return doc
+                    except Exception:
+                        continue
+        # fallback: parse key:value lines
+        md = {}
+        for line in content.splitlines():
+            if ': ' in line:
+                k, v = line.split(': ', 1)
+                md[k.strip().lstrip('/')] = v.strip()
+        return md
+    except Exception as e:
+        print(f"Error loading pred metadata: {e}", file=sys.stderr)
+        return {}
+
+
+def compute_recall(pred, truth):
+    pred_chars = set(pred.lower())
+    truth_chars = set(truth.lower())
     if not truth_chars:
         return 1.0
     return len(pred_chars & truth_chars) / len(truth_chars)
 
-def evaluate(pred_file, truth_file, result_file):
-    pred_metadata = load_pred_metadata(pred_file)
-    truth_metadata = load_truth_metadata(truth_file)
 
-    total_fields = len(TARGET_FIELDS)
-    passed_fields = 0
+def evaluate(pred_file, truth_file, result_file):
+    truth = load_truth_metadata(truth_file)
+    pred = load_pred_metadata(pred_file)
+
+    passed = 0
     comments = []
 
-    for key in TARGET_FIELDS:
-        truth_value = truth_metadata.get(key, "")
-        pred_value = str(pred_metadata.get(key, ""))
-        recall = compute_recall(pred_value, truth_value)
+    for field in TARGET_FIELDS:
+        tval = truth.get(field, '')
+        pval = str(pred.get(field, ''))
+        recall = compute_recall(pval, tval)
+        ok = recall >= 0.8
+        comments.append({
+            'field': field,
+            'recall': recall,
+            'pass': ok
+        })
+        if ok:
+            passed += 1
 
-        if recall >= 0.8:
-            passed_fields += 1
-            comments.append(f"✅ 字段 {key} 召回率: {recall:.2f} >= 0.8")
-        else:
-            comments.append(f"❌ 字段 {key} 召回率: {recall:.2f} < 0.8，预测: {pred_value}，应为: {truth_value}")
+    total = len(TARGET_FIELDS)
+    overall = (passed / total) >= 0.8
 
-    pass_ratio = passed_fields / total_fields if total_fields else 0
-    overall_pass = pass_ratio >= 0.8
-    comments.append(f"📊 字段通过率: {pass_ratio:.2f} ({passed_fields}/{total_fields})")
-    comments.append("✅ 测试通过！" if overall_pass else "❌ 测试未通过")
-
-    for c in comments:
-        print(c)
-
-    result_data = {
-        "Process": True,
-        "Result": overall_pass,
-        "TimePoint": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-        "comments": " ".join(comments)
+    # prepare result
+    entry = {
+        'Process': True,
+        'Result': overall,
+        'TimePoint': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+        'comments': comments
     }
+    # write
+    os.makedirs(os.path.dirname(result_file) or '.', exist_ok=True)
+    with open(result_file, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(entry, ensure_ascii=False, default=str) + '\n')
 
-    with open(result_file, "a", encoding="utf-8") as f:
-        f.write(json.dumps(result_data, ensure_ascii=False) + "\n")
+    # print simple
+    print(f"Overall Result: {'PASS' if overall else 'FAIL'} ({passed}/{total})")
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--pred_file", type=str, required=True, help="预测结果 JSON 文件路径")
-    parser.add_argument("--truth_file", type=str, required=True, help="标准答案 TXT 文件路径")
-    parser.add_argument("--result", type=str, required=True, help="评测结果输出 JSONL 文件")
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Evaluate PDF metadata recall')
+    parser.add_argument('--pred_file', required=True, help='Prediction file path')
+    parser.add_argument('--truth_file', required=True, help='Truth file path')
+    parser.add_argument('--result', required=True, help='Output JSONL result file')
     args = parser.parse_args()
-
     evaluate(args.pred_file, args.truth_file, args.result)

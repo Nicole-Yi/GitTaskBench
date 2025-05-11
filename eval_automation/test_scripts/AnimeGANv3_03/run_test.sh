@@ -25,7 +25,6 @@ mkdir -p "${RESULT_DIR}/${REPO_NAME}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        # exit 1  # 删除了 exit 以继续执行
     fi
 }
 
@@ -42,22 +41,18 @@ check_file_exists "${INPUT_VIDEO}"
 echo "=== 开始处理仓库 ${REPO_NAME} ==="
 # 在 output/ 下，查找以 .mp4 结尾的输出视频文件
 file=$(find "$OUTPUT_SUB_DIR" -maxdepth 1 -type f -name '*.mp4' | head -n1)
-if [[ -n "$file" ]]; then
-    python "${TEST_SCRIPT}" \
-        --input_video "${INPUT_VIDEO}" \
-        --output_video "${file}" \
-        --ssim_threshold 0.7 \
-        --fid_threshold 600.0 \
-        --result "${RESULT_JSON}"
-else
-    echo "[错误] 未找到匹配的输出视频文件 (*.mp4) 在 ${OUTPUT_SUB_DIR}"
-    # exit 1  # 删除了 exit 以继续执行
-fi
+
+python "${TEST_SCRIPT}" \
+    --input_video "${INPUT_VIDEO}" \
+    --output_video "${file}" \
+    --ssim_threshold 0.7 \
+    --fid_threshold 600.0 \
+    --result "${RESULT_JSON}"
+    
 
 # --- 检查执行结果 ---
 if [ $? -eq 0 ]; then
     echo "[成功] 输出文件: ${RESULT_JSON}"
 else
     echo "[失败] 请检查以上错误信息！"
-    # exit 1  # 删除了 exit 以继续执行
 fi

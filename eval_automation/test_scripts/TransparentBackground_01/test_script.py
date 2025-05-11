@@ -58,8 +58,8 @@ def main():
     if not process:
         comments = f"预测文件不存在：{args.pred}"
         save_result_jsonl(process, False, comments, args.result)
-        print(False)
-        sys.exit(0)
+        print(f"测试完成 - 最终状态: 未通过 (文件不存在)")
+        return
 
     try:
         orig = cv2.imread(args.orig, cv2.IMREAD_UNCHANGED)
@@ -82,12 +82,12 @@ def main():
         )
 
         save_result_jsonl(process, results, comments, args.result)
-        print(results)
+        print(f"测试完成 - 最终状态: {'通过' if results else '未通过'}")
 
     except Exception as e:
-        save_result_jsonl(process, False, str(e), args.result)
-        print(False)
-        sys.exit(1)
+        comments = f"处理过程中发生错误: {str(e)}"
+        save_result_jsonl(False, False, comments, args.result)
+        print(f"测试完成 - 最终状态: 异常 ({str(e)})")
 
 if __name__ == "__main__":
     main()

@@ -23,7 +23,6 @@ mkdir -p "${SCRIPT_DIR}" "${DATA_DIR}" "${RESULT_DIR}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[❌ 错误] 缺失文件: $1"
-        exit 1
     fi
 }
 
@@ -44,5 +43,4 @@ if [ $? -eq 0 ]; then
     echo "[✅ 成功] 测试完成，结果写入: ${RESULT_FILE}"
 else
     echo "[❌ 失败] 测试脚本运行出错"
-    exit 1
 fi

@@ -15,14 +15,16 @@ def evaluate_extraction(pred_path, gt_path):
     def check_file_exists(file_path):
         if not os.path.isfile(file_path):
             print(f"❌ 错误: 文件不存在: {file_path}")
-            exit(1)
+            return False
         if os.path.getsize(file_path) == 0:
             print(f"❌ 错误: 文件为空: {file_path}")
-            exit(1)
+            return False
+        return True
 
     # 检查文件
-    check_file_exists(pred_path)
-    check_file_exists(gt_path)
+    file_check = check_file_exists(pred_path) and check_file_exists(gt_path)
+    if not file_check:
+        return None, False
 
     # 读取预测结果
     with open(pred_path, 'r', encoding='utf-8') as f:
@@ -48,7 +50,7 @@ def evaluate_extraction(pred_path, gt_path):
     else:
         print("❌ 提取有误")
 
-    return edit_distance_ratio
+    return edit_distance_ratio, True
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate the edit distance between extracted and ground truth markdown content.")
@@ -59,25 +61,25 @@ def main():
     args = parser.parse_args()
 
     # 计算提取准确度（编辑距离比率）
-    edit_distance_ratio = evaluate_extraction(pred_path=args.pred_path, gt_path=args.gt_path)
+    edit_distance_ratio, process_status = evaluate_extraction(pred_path=args.pred_path, gt_path=args.gt_path)
 
     # 保存结果
     result = {
-        "Process": True,
-        "Result": edit_distance_ratio <= 0.5,  # 判断编辑距离比率是否低于阈值
+        "Process": process_status,
+        "Result": edit_distance_ratio <= 0.5 if process_status else False,  # 判断编辑距离比率是否低于阈值
         "TimePoint": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-        "comments": f"编辑距离比率: {edit_distance_ratio:.4f} {'满足' if edit_distance_ratio <= 0.5 else '不满足'} 50% 精度要求"
+        "comments": f"编辑距离比率: {edit_distance_ratio:.4f} {'满足' if edit_distance_ratio <= 0.5 else '不满足'} 50% 精度要求" if process_status else "文件检查失败"
     }
 
-    # 如果文件存在，追加写入，否则创建新文件
-    if os.path.exists(args.result):
-        with open(args.result, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(result, ensure_ascii=False) + '\n')
-    else:
-        with open(args.result, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(result, ensure_ascii=False) + '\n')
+    # 确保目录存在
+    os.makedirs(os.path.dirname(args.result) or '.', exist_ok=True)
+    
+    # 写入结果
+    with open(args.result, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(result, ensure_ascii=False) + '\n')
 
     print(f"结果已保存到: {args.result}")
+    print("\n测试完成 - 最终状态: " + ("通过" if result["Result"] else "未通过"))
 
 if __name__ == "__main__":
     main()

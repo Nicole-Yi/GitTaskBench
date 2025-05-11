@@ -28,7 +28,6 @@ mkdir -p "${GT_DIR}/${REPO_NAME}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        exit 1
     fi
 }
 
@@ -53,7 +52,6 @@ if [[ -n "$file" ]]; then
         --result "${RESULT_JSON}"
 else
     echo "[错误] 未找到匹配的输出文件 (output_*.jpg)"
-    exit 1
 fi
 
 # --- 检查执行结果 ---
@@ -61,5 +59,4 @@ if [ $? -eq 0 ]; then
     echo "[成功] 输出文件: ${RESULT_JSON}"
 else
     echo "[失败] 请检查以上错误信息！"
-    exit 1
 fi

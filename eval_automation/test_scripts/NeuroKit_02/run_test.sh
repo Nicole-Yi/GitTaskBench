@@ -30,13 +30,12 @@ mkdir -p "${GT_DIR}/${REPO_NAME}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[错误] 文件不存在: $1"
-        exit 1
     fi
 }
 
 # 验证测试脚本和输入文件
 OUTPUT_SUB_DIR="${OUTPUT_DIR}/${REPO_NAME}"
-RESULT_JSON="${RESULT_DIR}/${REPO_NAME}/evaluation_results.jsonl"
+RESULT_JSON="${RESULT_DIR}/${REPO_NAME}/results.jsonl"
 ########################################################################################################
 # 需要修改
 TEST_SCRIPT_EVAL="${SCRIPT_DIR}/${REPO_NAME}/test_script.py"
@@ -63,6 +62,6 @@ python "${TEST_SCRIPT_EVAL}" \
 if [ $? -eq 0 ]; then
     echo "[成功] 评估结果: ${RESULT_JSON}"
 else
-    echo "[失败] evaluate_rsp_metrics.py 执行失败，请检查错误信息！"
+    echo "[失败] 执行失败，请检查错误信息！"
 fi
 

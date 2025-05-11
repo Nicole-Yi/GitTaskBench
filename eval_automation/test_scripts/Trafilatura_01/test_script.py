@@ -31,7 +31,7 @@ def compare_txt_files(extracted_txt_path, ground_truth_txt_path, result_file):
         process_status = check_file_exists(extracted_txt_path) and check_file_exists(ground_truth_txt_path)
 
         # 记录当前时间
-        time_point = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        time_point = datetime.now().strftime("%Y-%m-dT%H:%M:%S")
 
         # 读取提取的文本文件和ground truth文本文件
         with open(extracted_txt_path, "r", encoding="utf-8") as f:
@@ -64,12 +64,12 @@ def compare_txt_files(extracted_txt_path, ground_truth_txt_path, result_file):
         with open(result_file, 'a', encoding='utf-8') as f:
             f.write(json.dumps(result_data, ensure_ascii=False, default=str) + "\n")
 
-        if not passed:
-            sys.exit(1)
+        # 输出最终状态（替代原退出逻辑）
+        print("\n测试完成 - 最终状态: " + ("通过" if passed else "未通过"))
 
     except Exception as e:
         print(f"❌ 测试异常: {e}")
-        sys.exit(1)
+        print("\n测试完成 - 最终状态: 异常")
 
 def main():
     parser = argparse.ArgumentParser(description="比较提取文本与ground truth文件内容")

@@ -26,7 +26,6 @@ mkdir -p "${GT_DIR}" "${OUTPUT_DIR}" "${RESULT_DIR}"
 check_file_exists() {
     if [ ! -f "$1" ]; then
         echo "[❌ 错误] 缺少文件: $1"
-        exit 1
     fi
 }
 
@@ -46,5 +45,4 @@ if [ $? -eq 0 ]; then
     echo "[✅ 成功] 测试完成，结果记录在: ${RESULT_JSONL}"
 else
     echo "[❌ 失败] 测试过程中发生错误"
-    exit 1
 fi
