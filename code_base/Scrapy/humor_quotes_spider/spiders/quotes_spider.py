@@ -20,18 +20,13 @@ class QuotesSpider(scrapy.Spider):
             yield response.follow(next_page, self.parse)
 
     def close(self, reason):
-        import xml.etree.ElementTree as ET
+        import csv
 
-        root = ET.Element('quotes')
-        
-        for quote in self.quotes_list:
-            quote_elem = ET.SubElement(root, 'quote')
-            text_elem = ET.SubElement(quote_elem, 'text')
-            text_elem.text = quote['text']
-            author_elem = ET.SubElement(quote_elem, 'author')
-            author_elem.text = quote['author']
-        
-        output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Scrapy_03/output.xml'
-        tree = ET.ElementTree(root)
-        tree.write(output_path, encoding='utf-8', xml_declaration=True)
+        output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Scrapy_02/output.csv'
+        with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['author', 'text']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for quote in self.quotes_list:
+                writer.writerow(quote)
 

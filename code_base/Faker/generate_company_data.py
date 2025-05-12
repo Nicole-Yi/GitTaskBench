@@ -1,5 +1,7 @@
 
+import sys
 import csv
+sys.path.append('/data/data/agent_test_codebase/GitTaskBench/code_base/Faker')
 from faker import Faker
 
 # Create a Faker instance
@@ -19,7 +21,7 @@ with open(output_path, 'w', newline='') as csvfile:
         # Create a fake company entry
         writer.writerow({
             'Company Name': fake.company(),
-            'Address': fake.address(),
+            'Address': fake.address().replace('\n', ', '),
             'Phone': fake.phone_number()
         })
-print(f"Data has been written to {output_path}")
+print(f"Company data generated and saved to {output_path}")

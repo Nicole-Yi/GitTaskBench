@@ -1,28 +1,26 @@
 
-import pdfplumber
 import re
+import sys
+from PyPDF2 import PdfReader
 
-# Define file paths
-input_pdf = '/data/data/agent_test_codebase/GitTaskBench/queries/PDFPlumber_03/input/PDFPlumber_03_input.pdf'
-output_txt = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/PDFPlumber_03/output.txt'
-
-# Regular expression pattern for matching email addresses
-email_pattern = re.compile(r'[\w\.-]+@[\w\.-]+\.\w+')
-
-# Open the PDF file
-def extract_emails_from_pdf():
+def extract_emails_from_pdf(pdf_path, output_path):
     emails = set()
-    with pdfplumber.open(input_pdf) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text()
-            if text:
-                emails.update(email_pattern.findall(text))
-
-    # Save the emails to a text file
-    with open(output_txt, 'w') as f:
-        for email in emails:
+    reader = PdfReader(pdf_path)
+    
+    for page in reader.pages:
+        text = page.extract_text()
+        if text:
+            found_emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', text)
+            emails.update(found_emails)
+    
+    with open(output_path, 'w') as f:
+        for email in sorted(emails):
             f.write(email + '\n')
+    return len(emails)
 
 if __name__ == "__main__":
-    extract_emails_from_pdf()
-    print("Email extraction completed.")
+    input_pdf = '/data/data/agent_test_codebase/GitTaskBench/queries/PDFPlumber_03/input/PDFPlumber_03_input.pdf'
+    output_txt = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/PDFPlumber_03/output.txt'
+    
+    count = extract_emails_from_pdf(input_pdf, output_txt)
+    print(f"Extracted {count} email addresses to {output_txt}")

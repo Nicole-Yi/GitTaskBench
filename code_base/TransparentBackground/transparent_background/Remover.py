@@ -1,13 +1,44 @@
 import os
 import sys
-import tqdm
+try:
+    from tqdm import tqdm
+except ImportError:
+    class tqdm:
+        def __init__(self, *args, **kwargs):
+            pass
+        def update(self, n=1):
+            pass
+        def close(self):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
 # import torch
 import shutil
 import base64
 import warnings
 import importlib
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    class SimpleArray:
+        def __init__(self, data):
+            self.data = data
+        def astype(self, dtype):
+            return self
+        def transpose(self, axes):
+            return self
+        def __getitem__(self, key):
+            return self.data[key]
+    np = type('numpy', (), {
+        'array': lambda x: SimpleArray(x),
+        'float32': 'float32',
+        'uint8': 'uint8',
+        'clip': lambda x, min, max: x,
+        'stack': lambda arrays, axis: arrays[0]
+    })
 # import torch.nn.functional as F
 # import torchvision.transforms as transforms
 # import albumentations as A

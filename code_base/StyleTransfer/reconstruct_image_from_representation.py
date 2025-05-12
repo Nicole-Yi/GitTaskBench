@@ -1,4 +1,4 @@
-import utils.utils as utils
+import utils.utils_pillow as utils
 from utils.video_utils import create_video_from_intermediate_results
 
 import os

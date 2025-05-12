@@ -1,5 +1,6 @@
 
-import cv2
+from PIL import Image
+import numpy as np
 from imwatermark import WatermarkEncoder
 import os
 
@@ -17,7 +18,8 @@ if not os.path.exists(output_directory):
 output_image_path = os.path.join(output_directory, 'output.png')
 
 # Read the input image
-bgr = cv2.imread(input_image_path)
+img = Image.open(input_image_path)
+bgr = np.array(img)
 
 # Define the watermark
 watermark = 'watermark'
@@ -30,4 +32,4 @@ encoder.set_watermark('bytes', watermark.encode('utf-8'))
 bgr_encoded = encoder.encode(bgr, 'dwtDct')
 
 # Save the encoded image
-cv2.imwrite(output_image_path, bgr_encoded)
+Image.fromarray(bgr_encoded).save(output_image_path)

@@ -1,25 +1,32 @@
 
-import os
+from ISR.models import RDN
+from PIL import Image
 import numpy as np
-from skimage.io import imread, imsave
-from ISR.models.rrdn import RRDN
+import os
 
-# Load input image
-input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/SuperResolution_03/input/SuperResolution_03_input.png'
-output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SuperResolution_03'
+# File paths
+input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/SuperResolution_02/input/SuperResolution_02_input.jpg'
+output_dir = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SuperResolution_02'
 os.makedirs(output_dir, exist_ok=True)
-input_image = imread(input_path)
+output_path = os.path.join(output_dir, 'output.jpg')
 
-# Initialize RRDN model
-rrdn = RRDN(arch_params={'C': 4, 'D': 3, 'G': 32, 'G0': 32, 'T': 10, 'x': 4}, weights='gans')
-weights_path = rrdn.weights_url['gans']['rrdn']  # Path to weights file
-rrdn.model.load_weights(weights_path)
+# Load image and convert to numpy array
+img = Image.open(input_path).convert('RGB')
+lr_img = np.array(img)
 
-# Predict high resolution image
-predict_image = rrdn.predict(input_image)
+# Initialize model with reduced requirements
+model = RDN(weights='psnr-small')
 
-# Save output image
-output_path = os.path.join(output_dir, 'output.png')
-imsave(output_path, predict_image)
+# Process in chunks if needed (memory management)
+if lr_img.nbytes > 50 * 1024 * 1024:  # If >50MB
+    chunks = [lr_img[i:i+512, j:j+512] for i in range(0, lr_img.shape[0], 512)
+                                 for j in range(0, lr_img.shape[1], 512)]
+    sr_chunks = [model.predict(chunk) for chunk in chunks]
+    sr_img = np.vstack([np.hstack(sr_chunks[i:i+lr_img.shape[1]//512+1]) 
+                       for i in range(0, len(sr_chunks), lr_img.shape[1]//512+1)])
+else:
+    sr_img = model.predict(lr_img)
 
-print(f'Super-resolution completed. Output saved at {output_path}')
+# Save result
+Image.fromarray(sr_img).save(output_path, quality=95)
+print(f"Super-resolution completed. Output saved to {output_path}")
