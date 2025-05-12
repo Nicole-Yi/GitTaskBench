@@ -1,0 +1,29 @@
+diff --git a/enhance_speech.py b/enhance_speech.py
+new file mode 100644
+index 00000000..2e39b5dd
+--- /dev/null
++++ b/enhance_speech.py
+@@ -0,0 +1,22 @@
++
++from speechbrain.inference.separation import SepformerSeparation as separator
++import torchaudio
++
++# Define input and output paths
++input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechBrain_04/input/SpeechBrain_04_input.wav"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechBrain_04"
++
++# Load the pretrained model
++model = separator.from_hparams(
++    source="speechbrain/sepformer-whamr-enhancement",
++    savedir="pretrained_models/sepformer-whamr-enhancement"
++)
++
++# Enhance the speech
++enhanced_speech = model.separate_file(path=input_path)
++
++# Save the enhanced speech to the output directory
++output_path = f"{output_dir}/output.wav"
++torchaudio.save(output_path, enhanced_speech[:, :, 0].detach().cpu(), 16000)
++
++print(f"Enhanced speech saved to {output_path}")
+\ No newline at end of file

@@ -1,0 +1,84 @@
+diff --git a/custom_config.yaml b/custom_config.yaml
+new file mode 100644
+index 00000000..25344643
+--- /dev/null
++++ b/custom_config.yaml
+@@ -0,0 +1,19 @@
++
++# Custom configuration for speech enhancement
++
++# Input audio file
++input_path: "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechEnhance_01/input/SpeechEnhance_01_input.wav"
++
++# Output directory
++output_folder: "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechEnhance_01"
++
++# Model configuration
++model:
++  name: "sepformer"
++  source: "speechbrain/sepformer-whamr-enhancement"
++  savedir: "pretrained_models/sepformer-whamr-enhancement"
++
++# Audio settings
++sample_rate: 16000
++save_audio: True
++n_audio_to_save: 1
+\ No newline at end of file
+diff --git a/enhance_audio.py b/enhance_audio.py
+new file mode 100644
+index 00000000..719f8380
+--- /dev/null
++++ b/enhance_audio.py
+@@ -0,0 +1,18 @@
++
++from speechbrain.inference.separation import SepformerSeparation as separator
++import torchaudio
++
++# Define paths
++input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechEnhance_01/input/SpeechEnhance_01_input.wav"
++output_path = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechEnhance_01/output.wav"
++
++# Load the Sepformer model
++model = separator.from_hparams(source="speechbrain/sepformer-whamr-enhancement", savedir="pretrained_models/sepformer-whamr-enhancement")
++
++# Enhance the audio
++enhanced_speech = model.separate_file(path=input_path)
++
++# Save the enhanced audio
++torchaudio.save(output_path, enhanced_speech[:, :, 0].detach().cpu(), 16000)
++
++print("Audio enhancement completed. Enhanced audio saved to:", output_path)
+\ No newline at end of file
+diff --git a/run_enhancement.py b/run_enhancement.py
+new file mode 100644
+index 00000000..3d95c616
+--- /dev/null
++++ b/run_enhancement.py
+@@ -0,0 +1,26 @@
++
++import os
++import torchaudio
++from speechbrain.inference.separation import SepformerSeparation as separator
++
++# Configuration
++input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechEnhance_01/input/SpeechEnhance_01_input.wav"
++output_folder = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechEnhance_01"
++model_source = "speechbrain/sepformer-whamr-enhancement"
++model_savedir = "pretrained_models/sepformer-whamr-enhancement"
++sample_rate = 16000
++
++# Load the Sepformer model
++model = separator.from_hparams(
++    source=model_source,
++    savedir=model_savedir
++)
++
++# Enhance the audio
++enhanced_speech = model.separate_file(path=input_path)
++
++# Save the enhanced audio
++output_path = os.path.join(output_folder, "output.wav")
++torchaudio.save(output_path, enhanced_speech[:, :, 0].detach().cpu(), sample_rate)
++
++print("Audio enhancement completed. Enhanced audio saved to:", output_path)
+\ No newline at end of file

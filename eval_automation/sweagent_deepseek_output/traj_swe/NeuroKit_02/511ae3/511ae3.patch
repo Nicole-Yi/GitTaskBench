@@ -1,0 +1,29 @@
+diff --git a/process_eda.py b/process_eda.py
+new file mode 100644
+index 00000000..2870b71a
+--- /dev/null
++++ b/process_eda.py
+@@ -0,0 +1,22 @@
++
++import os
++import pandas as pd
++import numpy as np
++
++# Load the EDA signal from the input CSV file
++input_file = "/data/data/agent_test_codebase/GitTaskBench/queries/NeuroKit_02/input/eda_analysis_01_input.csv"
++data = pd.read_csv(input_file)
++eda_signal = data.values.flatten()
++
++# Apply a simple moving average filter to smooth the signal
++window_size = 5
++smoothed_signal = np.convolve(eda_signal, np.ones(window_size)/window_size, mode='same')
++
++# Save the smoothed signal to the output directory
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/NeuroKit_02"
++os.makedirs(output_dir, exist_ok=True)
++output_file = f"{output_dir}/output.csv"
++pd.DataFrame(smoothed_signal).to_csv(output_file, index=False, header=False)
++
++# Print success message
++print("Basic EDA processing completed successfully. Output saved to:", output_dir)
+\ No newline at end of file

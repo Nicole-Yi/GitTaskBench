@@ -1,0 +1,34 @@
+diff --git a/extract_tables.py b/extract_tables.py
+new file mode 100644
+index 00000000..f1c2f42e
+--- /dev/null
++++ b/extract_tables.py
+@@ -0,0 +1,27 @@
++
++import sys
++sys.path.append("/data/data/agent_test_codebase/GitTaskBench/code_base/PDFPlumber")
++import pdfplumber
++import pandas as pd
++
++# Input PDF file path
++input_pdf = "/data/data/agent_test_codebase/GitTaskBench/queries/PDFPlumber_02/input/PDFPlumber_02_input.pdf"
++
++# Output directory and file path
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/PDFPlumber_02"
++output_csv = f"{output_dir}/output.csv"
++
++# Open the PDF file
++with pdfplumber.open(input_pdf) as pdf:
++    # Extract tables from the first two pages
++    tables = []
++    for page in pdf.pages[:2]:
++        tables.extend(page.extract_tables())
++
++    # Merge all tables into a single DataFrame
++    merged_df = pd.concat([pd.DataFrame(table[1:], columns=table[0]) for table in tables if table])
++
++    # Save the merged DataFrame to a CSV file
++    merged_df.to_csv(output_csv, index=False)
++
++print(f"Tables extracted and saved to {output_csv}")
+\ No newline at end of file

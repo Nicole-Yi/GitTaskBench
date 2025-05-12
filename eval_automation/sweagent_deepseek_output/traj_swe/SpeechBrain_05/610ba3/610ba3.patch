@@ -1,0 +1,35 @@
+diff --git a/speaker_verification.py b/speaker_verification.py
+new file mode 100644
+index 00000000..de3bac11
+--- /dev/null
++++ b/speaker_verification.py
+@@ -0,0 +1,28 @@
++
++import json
++from speechbrain.inference.speaker import SpeakerRecognition
++
++# Initialize the speaker recognition model
++verification = SpeakerRecognition.from_hparams(
++    source="speechbrain/spkrec-ecapa-voxceleb",
++    savedir="/tmp/pretrained_models/spkrec-ecapa-voxceleb"
++)
++
++# Paths to the input audio files
++file1 = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechBrain_05/input/SpeechBrain_05_input_01.wav"
++file2 = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechBrain_05/input/SpeechBrain_05_input_02.wav"
++
++# Perform verification
++score, prediction = verification.verify_files(file1, file2)
++
++# Prepare the result
++result = {
++    "prediction": bool(prediction)
++}
++
++# Save the result to a JSON file
++output_path = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechBrain_05/output.json"
++with open(output_path, "w") as f:
++    json.dump(result, f)
++
++print(f"Result saved to {output_path}")
+\ No newline at end of file

@@ -1,0 +1,120 @@
+diff --git a/artistic_colorize.py b/artistic_colorize.py
+new file mode 100644
+index 00000000..801826a4
+--- /dev/null
++++ b/artistic_colorize.py
+@@ -0,0 +1,24 @@
++
++from deoldify import device
++from deoldify.device_id import DeviceId
++from deoldify.visualize import get_image_colorizer
++import warnings
++
++# Set the device to GPU
++device.set(device=DeviceId.GPU0)
++
++# Suppress warnings
++warnings.filterwarnings("ignore", category=UserWarning, message=".*?Your .*? set is empty.*?")
++
++# Initialize the colorizer in Artistic mode
++colorizer = get_image_colorizer(artistic=True)
++
++# Input and output paths
++input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/DeOldify_02/input/DeOldify_02_input.webp'
++output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/DeOldify_02/output.png'
++
++# Colorize the image
++result = colorizer.get_transformed_image(input_path, render_factor=21)
++result.save(output_path)
++
++print(f'Image colorization complete: {output_path}')
+\ No newline at end of file
+diff --git a/colorize_image.py b/colorize_image.py
+new file mode 100644
+index 00000000..a584974a
+--- /dev/null
++++ b/colorize_image.py
+@@ -0,0 +1,21 @@
++
++from deoldify import device
++from deoldify.device_id import DeviceId
++from deoldify.visualize import get_artistic_image_colorizer
++import warnings
++
++# Set the device to GPU
++device.set(device=DeviceId.GPU0)
++
++# Initialize the colorizer
++colorizer = get_artistic_image_colorizer()
++
++# Input and output paths
++input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/DeOldify_02/input/DeOldify_02_input.webp'
++output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/DeOldify_02/output.png'
++
++# Colorize the image
++result = colorizer.get_transformed_image(input_path, render_factor=21)
++result.save(output_path)
++
++print(f'Image colorization complete: {output_path}')
+\ No newline at end of file
+diff --git a/deoldify_colorize.py b/deoldify_colorize.py
+new file mode 100644
+index 00000000..a88967c6
+--- /dev/null
++++ b/deoldify_colorize.py
+@@ -0,0 +1,25 @@
++
++# NOTE: This must be the first call in order to work properly!
++from deoldify import device
++from deoldify.device_id import DeviceId
++from deoldify.visualize import get_image_colorizer
++import warnings
++
++# Set device to GPU
++device.set(device=DeviceId.GPU0)
++
++# Suppress warnings
++warnings.filterwarnings("ignore", category=UserWarning, message=".*?Your .*? set is empty.*?")
++
++# Initialize artistic colorizer
++colorizer = get_image_colorizer(artistic=True)
++
++# Input and output paths
++input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/DeOldify_02/input/DeOldify_02_input.webp'
++output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/DeOldify_02/output.png'
++
++# Colorize the image
++result = colorizer.get_transformed_image(input_path, render_factor=21)
++result.save(output_path)
++
++print(f'Image colorization complete: {output_path}')
+\ No newline at end of file
+diff --git a/minimal_colorize.py b/minimal_colorize.py
+new file mode 100644
+index 00000000..9594e4db
+--- /dev/null
++++ b/minimal_colorize.py
+@@ -0,0 +1,22 @@
++
++from deoldify import device
++from deoldify.device_id import DeviceId
++from deoldify.visualize import get_artistic_image_colorizer
++import warnings
++
++# Set device
++warnings.filterwarnings("ignore")
++device.set(device=DeviceId.GPU0)
++
++# Get colorizer
++colorizer = get_artistic_image_colorizer()
++
++# Paths
++input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/DeOldify_02/input/DeOldify_02_input.webp'
++output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/DeOldify_02/output.png'
++
++# Process image
++result = colorizer.get_transformed_image(input_path, render_factor=21)
++result.save(output_path)
++
++print(f'Successfully saved colorized image to {output_path}')
+\ No newline at end of file

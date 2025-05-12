@@ -1,0 +1,83 @@
+diff --git a/config.yaml b/config.yaml
+new file mode 100644
+index 00000000..50138e92
+--- /dev/null
++++ b/config.yaml
+@@ -0,0 +1,3 @@
++
++input: /data/data/agent_test_codebase/GitTaskBench/queries/FunASR_01/input/FunASR_01_input.wav
++model: speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch
+\ No newline at end of file
+diff --git a/recognize_chinese_speech.sh b/recognize_chinese_speech.sh
+new file mode 100644
+index 00000000..eb240bf4
+--- /dev/null
++++ b/recognize_chinese_speech.sh
+@@ -0,0 +1,23 @@
++
++#!/bin/bash
++# Copyright FunASR (https://github.com/alibaba-damo-academy/FunASR). All Rights Reserved.
++#  MIT License  (https://opensource.org/licenses/MIT)
++
++# Input and output paths
++input="/data/data/agent_test_codebase/GitTaskBench/queries/FunASR_01/input/FunASR_01_input.wav"
++output_dir="/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/FunASR_01"
++
++# Model for Chinese speech recognition
++model="iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
++
++device="cpu"  # Use CPU for inference
++
++# Ensure output directory exists
++mkdir -p "${output_dir}"
++
++# Perform speech recognition
++python -m funasr.bin.inference \
++++model="${model}" \
++++input="${input}" \
++++output_dir="${output_dir}" \
++++device="${device}"
+\ No newline at end of file
+diff --git a/run_asr.py b/run_asr.py
+new file mode 100644
+index 00000000..400701ba
+--- /dev/null
++++ b/run_asr.py
+@@ -0,0 +1,36 @@
++
++#!/usr/bin/env python3
++# -*- encoding: utf-8 -*-
++# Copyright FunASR (https://github.com/alibaba-damo-academy/FunASR). All Rights Reserved.
++#  MIT License  (https://opensource.org/licenses/MIT)
++
++from funasr import AutoModel
++import os
++
++# Define input and output paths
++input_audio = "/data/data/agent_test_codebase/GitTaskBench/queries/FunASR_01/input/FunASR_01_input.wav"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/FunASR_01"
++
++# Ensure output directory exists
++os.makedirs(output_dir, exist_ok=True)
++
++# Initialize the model
++model = AutoModel(
++    model="iic/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch",
++    vad_model="iic/speech_fsmn_vad_zh-cn-16k-common-pytorch",
++    vad_kwargs={"max_single_segment_time": 60000},
++    punc_model="iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch",
++)
++
++# Perform speech recognition
++result = model.generate(
++    input=input_audio,
++    cache={},
++)
++
++# Save the result to a file
++output_file = os.path.join(output_dir, "output.txt")
++with open(output_file, "w") as f:
++    f.write(str(result))
++
++print(f"Speech recognition completed. Result saved to {output_file}")
+\ No newline at end of file

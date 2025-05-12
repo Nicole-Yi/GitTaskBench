@@ -1,0 +1,64 @@
+diff --git a/speaker_diarization.py b/speaker_diarization.py
+new file mode 100644
+index 00000000..b617746f
+--- /dev/null
++++ b/speaker_diarization.py
+@@ -0,0 +1,57 @@
++
++import torch
++import torchaudio
++from speechbrain.inference.speaker import SpeakerRecognition
++from sklearn.cluster import KMeans
++import os
++
++def segment_audio_by_speaker(input_path, output_dir, segment_length=5.0):
++    """
++    Segment an audio file by speaker using speaker embeddings and clustering.
++    
++    Args:
++        input_path (str): Path to the input audio file.
++        output_dir (str): Directory to save the segmented audio files.
++        segment_length (float): Length of each audio segment in seconds.
++    """
++    # Load the audio file
++    waveform, sample_rate = torchaudio.load(input_path)
++    
++    # Initialize the speaker recognition model
++    model = SpeakerRecognition.from_hparams(
++        source="speechbrain/spkrec-ecapa-voxceleb",
++        savedir="tmp_pretrained"
++    )
++    
++    # Calculate the number of samples per segment
++    samples_per_segment = int(segment_length * sample_rate)
++    num_segments = int(waveform.size(1) / samples_per_segment)
++    
++    # Extract embeddings for each segment
++    embeddings = []
++    for i in range(num_segments):
++        start = i * samples_per_segment
++        end = start + samples_per_segment
++        segment = waveform[:, start:end]
++        embedding = model.encode_batch(segment, normalize=False)
++        embeddings.append(embedding.squeeze().cpu().numpy())
++    
++    # Cluster embeddings to identify speakers
++    kmeans = KMeans(n_clusters=2)  # Assuming 2 speakers for simplicity
++    labels = kmeans.fit_predict(embeddings)
++    
++    # Save segments by speaker
++    os.makedirs(output_dir, exist_ok=True)
++    for i, label in enumerate(labels):
++        start = i * samples_per_segment
++        end = start + samples_per_segment
++        segment = waveform[:, start:end]
++        output_path = os.path.join(output_dir, f"output_{label}_{i}.wav")
++        torchaudio.save(output_path, segment, sample_rate)
++    
++    print(f"Segmentation complete. Files saved to {output_dir}")
++
++if __name__ == "__main__":
++    input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechBrain_02/input/SpeechBrain_02_input.mp3"
++    output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechBrain_02"
++    segment_audio_by_speaker(input_path, output_dir)
+\ No newline at end of file

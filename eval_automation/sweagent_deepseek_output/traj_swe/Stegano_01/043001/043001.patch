@@ -1,0 +1,49 @@
+diff --git a/embed_watermark.py b/embed_watermark.py
+new file mode 100644
+index 00000000..1669ac69
+--- /dev/null
++++ b/embed_watermark.py
+@@ -0,0 +1,42 @@
++
++import sys
++import os
++sys.path.append("/data/data/agent_test_codebase/GitTaskBench/code_base/Stegano")
++
++# Manually copied hide function from stegano.lsb.lsb
++def hide(input_image, message):
++    """Hide a message in an image using LSB steganography."""
++    from PIL import Image
++    import numpy as np
++
++    img = Image.open(input_image)
++    pixels = np.array(img)
++
++    # Convert message to binary
++    binary_message = ''.join(format(ord(char), '08b') for char in message)
++    binary_message += '00000000'  # Null terminator
++
++    # Flatten the image array
++    flat_pixels = pixels.flatten()
++
++    # Embed the message in the LSBs
++    for i in range(len(binary_message)):
++        if i < len(flat_pixels):
++            flat_pixels[i] = (flat_pixels[i] & ~1) | int(binary_message[i])
++
++    # Reshape the array back to the original shape
++    pixels = flat_pixels.reshape(pixels.shape)
++
++    # Save the modified image
++    new_img = Image.fromarray(pixels)
++    return new_img
++
++# Input and output paths
++input_image = "/data/data/agent_test_codebase/GitTaskBench/queries/Stegano_01/input/Stegano_01_input.png"
++output_image = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Stegano_01/output.png"
++
++# Embed the watermark "stegano" into the image
++secret = hide(input_image, "stegano")
++secret.save(output_image)
++
++print("Watermark embedded successfully. Output saved at:", output_image)
+\ No newline at end of file

@@ -1,0 +1,33 @@
+diff --git a/transcribe.py b/transcribe.py
+new file mode 100644
+index 00000000..1c46af5a
+--- /dev/null
++++ b/transcribe.py
+@@ -0,0 +1,26 @@
++
++import sys
++sys.path.append("/data/data/agent_test_codebase/GitTaskBench/code_base/SpeechBrain")
++from speechbrain.inference import EncoderDecoderASR
++import os
++
++# Define input and output paths
++input_file = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechBrain_03/input/SpeechBrain_03_input.wav"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechBrain_03"
++output_file = os.path.join(output_dir, "output.txt")
++
++# Load the pretrained ASR model
++asr_model = EncoderDecoderASR.from_hparams(
++    source="speechbrain/asr-conformer-transformerlm-librispeech",
++    savedir="pretrained_models/asr-transformer-transformerlm-librispeech"
++)
++
++# Transcribe the audio file
++transcription = asr_model.transcribe_file(input_file)
++
++# Save the transcription to the output file
++os.makedirs(output_dir, exist_ok=True)
++with open(output_file, "w") as f:
++    f.write(transcription)
++
++print(f"Transcription saved to {output_file}")
+\ No newline at end of file

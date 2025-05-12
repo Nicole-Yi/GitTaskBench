@@ -1,0 +1,33 @@
+diff --git a/speaker_separation.py b/speaker_separation.py
+new file mode 100644
+index 00000000..e903197a
+--- /dev/null
++++ b/speaker_separation.py
+@@ -0,0 +1,26 @@
++
++from speechbrain.inference.separation import SepformerSeparation
++import torchaudio
++import os
++
++# Define input and output paths
++input_path = "/data/data/agent_test_codebase/GitTaskBench/queries/SpeechBrain_01/input/SpeechBrain_01_input.wav"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/SpeechBrain_01"
++
++# Ensure output directory exists
++os.makedirs(output_dir, exist_ok=True)
++
++# Load the pretrained model
++model = SepformerSeparation.from_hparams(
++    source="speechbrain/sepformer-wsj02mix",
++    savedir="/tmp/sepformer-wsj02mix"
++)
++
++# Perform speaker separation
++est_sources = model.separate_file(input_path)
++
++# Save the separated sources
++output_path = os.path.join(output_dir, "output.wav")
++torchaudio.save(output_path, est_sources.squeeze(0), 8000)  # Assuming 8kHz sample rate
++
++print(f"Speaker separation completed. Output saved to {output_path}")
+\ No newline at end of file

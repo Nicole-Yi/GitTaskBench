@@ -1,0 +1,37 @@
+diff --git a/extract_metadata.py b/extract_metadata.py
+new file mode 100644
+index 00000000..79fb30eb
+--- /dev/null
++++ b/extract_metadata.py
+@@ -0,0 +1,30 @@
++
++import sys
++sys.path.append("/data/data/agent_test_codebase/GitTaskBench/code_base/Trafilatura")
++import requests
++import re
++
++# Read the input URL
++url = "https://www.cnprose.com/article-detail/WJaljpMN"
++
++# Fetch the webpage
++response = requests.get(url, timeout=10)
++html_content = response.text
++
++# Extract title
++title_match = re.search(r'<title>(.*?)</title>', html_content)
++title = title_match.group(1) if title_match else "No title found"
++
++# Extract description
++desc_match = re.search(r'<meta name="description" content="(.*?)"', html_content)
++description = desc_match.group(1) if desc_match else "No description found"
++
++# Prepare metadata
++metadata = f"Title: {title}\nDescription: {description}"
++
++# Save the metadata to a .txt file
++output_file = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Trafilatura_03/output.txt"
++with open(output_file, "w") as f:
++    f.write(metadata)
++
++print(f"Metadata saved to {output_file}")
+\ No newline at end of file

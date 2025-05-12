@@ -1,0 +1,34 @@
+diff --git a/decode_watermark.py b/decode_watermark.py
+new file mode 100644
+index 00000000..b0daa882
+--- /dev/null
++++ b/decode_watermark.py
+@@ -0,0 +1,27 @@
++
++import cv2
++from imwatermark import WatermarkDecoder
++
++# Path to the input image
++input_image_path = "/data/data/agent_test_codebase/GitTaskBench/queries/InvisibleWatermark_02/input/InvisibleWatermark_02_input.png"
++
++# Load the image
++bgr = cv2.imread(input_image_path)
++
++# Initialize the decoder for 4 characters (32 bits)
++decoder = WatermarkDecoder('bytes', 32)
++
++# Decode the watermark
++watermark = decoder.decode(bgr, 'dwtDct')
++
++# Print the decoded watermark
++print(f"Decoded watermark: {watermark.decode('utf-8')}")
++
++# Save the output to the specified directory
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/InvisibleWatermark_02"
++output_file = f"{output_dir}/output.txt"
++
++import os
++os.makedirs(output_dir, exist_ok=True)
++with open(output_file, 'w') as f:
++    f.write(watermark.decode('utf-8'))
+\ No newline at end of file

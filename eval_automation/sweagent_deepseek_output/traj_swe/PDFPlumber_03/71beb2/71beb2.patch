@@ -1,0 +1,34 @@
+diff --git a/extract_emails.py b/extract_emails.py
+new file mode 100644
+index 00000000..b9fcd785
+--- /dev/null
++++ b/extract_emails.py
+@@ -0,0 +1,27 @@
++
++import re
++import os
++
++# Input and output paths
++input_pdf = "/data/data/agent_test_codebase/GitTaskBench/queries/PDFPlumber_03/input/PDFPlumber_03_input.pdf"
++output_dir = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/PDFPlumber_03"
++output_file = os.path.join(output_dir, "output.txt")
++
++# Regular expression to match email addresses
++email_regex = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
++
++# Create output directory if it doesn't exist
++os.makedirs(output_dir, exist_ok=True)
++
++# Read PDF as binary and try to find email patterns
++email_addresses = []
++with open(input_pdf, 'rb') as f:
++    content = f.read().decode('ascii', errors='ignore')
++    email_addresses = re.findall(email_regex, content)
++
++# Save the extracted email addresses to the output file
++with open(output_file, 'w') as f:
++    for email in email_addresses:
++        f.write(email + '\n')
++
++print(f"Extracted {len(email_addresses)} email addresses to {output_file}")
+\ No newline at end of file

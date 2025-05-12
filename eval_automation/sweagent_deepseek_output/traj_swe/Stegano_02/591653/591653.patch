@@ -1,0 +1,87 @@
+diff --git a/extract_message.py b/extract_message.py
+index 4f9b3fca..e5a6828d 100644
+--- a/extract_message.py
++++ b/extract_message.py
+@@ -1,4 +1,6 @@
+ 
++import sys
++sys.path.append("/data/data/agent_test_codebase/GitTaskBench/code_base/Stegano")
+ from stegano.lsb.lsb import reveal
+ 
+ # Define input and output file paths
+diff --git a/standalone_extract.py b/standalone_extract.py
+new file mode 100644
+index 00000000..bf27c95a
+--- /dev/null
++++ b/standalone_extract.py
+@@ -0,0 +1,69 @@
++
++import base64
++import itertools
++from functools import reduce
++from typing import IO, List, Union
++from PIL import Image
++
++ENCODINGS = {"UTF-8": 8, "UTF-32LE": 32}
++
++class Revealer:
++    """Class to reveal messages hidden in images using LSB steganography."""
++
++    def __init__(self, encoded_image, encoding="UTF-8", close_file=True):
++        self.encoded_image = Image.open(encoded_image) if isinstance(encoded_image, str) else encoded_image
++        self.encoding = encoding
++        self.close_file = close_file
++        self.secret_message = ""
++        self.current_bit = 0
++        self.char_buffer = ""
++
++    def decode_pixel(self, pixel):
++        """Decode a single pixel to extract a bit of the hidden message."""
++        r, g, b = self.encoded_image.getpixel(pixel)[:3]
++        self.char_buffer += str(r & 1)
++        self.char_buffer += str(g & 1)
++        self.char_buffer += str(b & 1)
++
++        if len(self.char_buffer) >= ENCODINGS[self.encoding]:
++            decoded_char = chr(int(self.char_buffer[:ENCODINGS[self.encoding]], 2))
++            self.secret_message += decoded_char
++            self.char_buffer = self.char_buffer[ENCODINGS[self.encoding]:]
++
++            if decoded_char == "\0":
++                if self.close_file:
++                    self.encoded_image.close()
++                return True
++        return False
++
++def reveal(encoded_image, generator=None, shift=0, encoding="UTF-8", close_file=True):
++    """Find a message in an image (with the LSB technique)."""
++    revealer = Revealer(encoded_image, encoding, close_file)
++    width = revealer.encoded_image.width
++
++    if not generator:
++        generator = itertools.count()
++
++    while shift != 0:
++        next(generator)
++        shift -= 1
++
++    while True:
++        generated_number = next(generator)
++        col = generated_number % width
++        row = int(generated_number / width)
++
++        if revealer.decode_pixel((col, row)):
++            return revealer.secret_message
++
++# Define input and output file paths
++input_image = "/data/data/agent_test_codebase/GitTaskBench/queries/Stegano_02/input/Stegano_02_input.png"
++output_file = "/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/Stegano_02/output"
++
++# Reveal the hidden message
++hidden_message = reveal(input_image)
++
++# Save the message to a file
++with open(output_file, "w") as f:
++    f.write(hidden_message)
++    print("Hidden message extracted and saved to", output_file)
+\ No newline at end of file
