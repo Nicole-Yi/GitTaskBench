@@ -2,18 +2,16 @@
 from deoldify import device
 from deoldify.device_id import DeviceId
 
-# Set the device to GPU
-# If you want to use the CPU, set device=DeviceId.CPU
-# Note: Running on CPU might be significantly slower than on GPU
+# Force CPU mode
+device.set(device=DeviceId.CPU)
+print("Warning: Running in CPU-only mode - performance will be reduced")
 
-device.set(device=DeviceId.GPU0)
-
-from deoldify.visualize import *
+from deoldify.visualize import get_video_colorizer
 import warnings
 warnings.filterwarnings('ignore', category=UserWarning, message='.*?Your .*? set is empty.*?')
 
-# Initialize the colorizer
-colorizer = get_video_colorizer()
+# Initialize the colorizer with minimal dependencies
+colorizer = get_video_colorizer(render_factor=21)
 input_path = '/data/data/agent_test_codebase/GitTaskBench/queries/DeOldify_03/input/DeOldify_03_input.mp4'
 output_path = '/data/data/agent_test_codebase/GitTaskBench/eval_automation/output/DeOldify_03/output.mp4'
 
